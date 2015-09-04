@@ -55,7 +55,7 @@ public class MJR_BeamBot {
 		try {
 			if (debugMessages)
 				System.out.println("Connecting to Beam! Using Username: "
-						+ username + ", Password: " + password);
+						+ username);
 			user = beam.use(UsersService.class).login(username, password).get();
 		} catch (ExecutionException e) {
 			if (debugMessages)
@@ -78,7 +78,6 @@ public class MJR_BeamBot {
 		chat = beam.use(ChatService.class).findOne(connectedChannel.channel.id)
 				.get();
 		connectable = chat.makeConnectable(beam);
-
 		connected = connectable.connectBlocking();
 
 		if (connected) {
@@ -143,6 +142,8 @@ public class MJR_BeamBot {
 		viewers.clear();
 		moderators.clear();
 		messageIDCache.clear();
+		if (debugMessages)
+			System.out.println("Disconnected from Beam!");
 	}
 
 	public void sendMessage(String msg) {
@@ -180,6 +181,7 @@ public class MJR_BeamBot {
 	}
 
 	protected void ban(String user) {
+		deleteUserMessages(user);
 		String path = BeamAPI.BASE_PATH.resolve(
 				"channels/" + connectedChannel.channel.id + "/users/"
 						+ user.toLowerCase()).toString();
