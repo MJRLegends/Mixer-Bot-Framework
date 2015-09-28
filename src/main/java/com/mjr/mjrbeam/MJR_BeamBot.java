@@ -319,19 +319,36 @@ public class MJR_BeamBot {
 		return viewers;
 	}
 
-	public void setdebug(boolean value) {
+	protected void setdebug(boolean value) {
 		debugMessages = value;
 	}
 
-	//,List<Role> user_roles
+	protected void addViewer(String viewer) {
+		if (!viewers.contains(viewer.toLowerCase()))
+			this.viewers.add(viewer.toLowerCase());
+	}
+
+	protected void removeViewer(String viewer) {
+		if (viewers.contains(viewer.toLowerCase()))
+			viewers.remove(viewer.toLowerCase());
+	}
+
+	protected void addModerator(String moderator) {
+		if (!moderators.contains(moderator.toLowerCase()))
+			this.moderators.add(moderator.toLowerCase());
+	}
+
+	protected void removeModerator(String moderator) {
+		if (moderators.contains(moderator.toLowerCase()))
+			moderators.remove(moderator.toLowerCase());
+	}
+
 	protected void onMessage(String sender, String message) {
 	}
 
 	protected void onJoin(String sender) {
-
 	}
 
 	protected void onPart(String sender) {
-
 	}
 }
