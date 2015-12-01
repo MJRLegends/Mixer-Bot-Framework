@@ -20,8 +20,8 @@ import pro.beam.api.resource.chat.events.EventHandler;
 import pro.beam.api.resource.chat.events.IncomingMessageEvent;
 import pro.beam.api.resource.chat.events.UserJoinEvent;
 import pro.beam.api.resource.chat.events.UserLeaveEvent;
-import pro.beam.api.resource.chat.events.data.IncomingMessageData.MessagePart;
-import pro.beam.api.resource.chat.events.data.IncomingMessageData.MessagePart.Type;
+import pro.beam.api.resource.chat.events.data.MessageComponent.MessageTextComponent;
+import pro.beam.api.resource.chat.events.data.MessageComponent.MessageTextComponent.Type;
 import pro.beam.api.resource.chat.methods.AuthenticateMessage;
 import pro.beam.api.resource.chat.methods.ChatSendMethod;
 import pro.beam.api.resource.chat.replies.AuthenticationReply;
@@ -48,64 +48,61 @@ public class MJR_BeamBot {
 	private boolean authenticated = false;
 	private boolean debugMessages = false;
 
-	protected final synchronized void connect(String channel, String username,
-			String password) throws InterruptedException, ExecutionException {
+	protected final synchronized void connect(String channel, String username, String password) throws InterruptedException, ExecutionException {
 		this.username = username;
 		this.password = password;
 		try {
 			if (debugMessages)
-				System.out.println("Connecting to Beam! Using Username: "
-						+ username);
+				System.out.println("Connecting to Beam! Using Username: " + username);
 			user = beam.use(UsersService.class).login(username, password).get();
 		} catch (ExecutionException e) {
 			if (debugMessages)
-				System.out
-						.println("Failed To login to beam! check your login credentials!");
+				System.out.println("Failed To login to beam! check your login credentials!");
 			return;
 		}
 		if (debugMessages)
 			System.out.println("Connecting to channel: " + channel);
-		UserSearchResponse search = beam.use(UsersService.class)
-				.search(channel.toLowerCase()).get();
+		UserSearchResponse search = beam.use(UsersService.class).search(channel.toLowerCase()).get();
 		if (search.size() > 0) {
-			connectedChannel = beam.use(UsersService.class)
-					.findOne(search.get(0).id).get();
+			connectedChannel = beam.use(UsersService.class).findOne(search.get(0).id).get();
 		} else {
 			if (debugMessages)
 				System.out.println("No channel found!");
 			return;
 		}
-		chat = beam.use(ChatService.class).findOne(connectedChannel.channel.id)
-				.get();
+		chat = beam.use(ChatService.class).findOne(connectedChannel.channel.id).get();
 		connectable = chat.makeConnectable(beam);
 		connected = connectable.connectBlocking();
 
 		if (connected) {
-			connectable.send(AuthenticateMessage.from(connectedChannel.channel,
-					user, chat.authkey),
-					new ReplyHandler<AuthenticationReply>() {
-						@Override
-						public void onSuccess(AuthenticationReply reply) {
-							authenticated = true;
-						}
-					});
+			connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
+				@Override
+				public void onSuccess(AuthenticationReply reply) {
+					authenticated = true;
+				}
+			});
 		}
 
-		connectable.on(IncomingMessageEvent.class,
-				new EventHandler<IncomingMessageEvent>() {
-					@Override
-					public void onEvent(IncomingMessageEvent event) {
-						messageIDCache.add(event);
-						String msg = "";
-						for (MessagePart msgp : event.data.message) {
-							if (msgp.type.equals(Type.LINK)) {
-								return;
-							}
-							msg += msgp.data;
-						}
-						onMessage(event.data.user_name, msg);
+		connectable.on(IncomingMessageEvent.class, new EventHandler<IncomingMessageEvent>() {
+			@Override
+			public void onEvent(IncomingMessageEvent event) {
+				System.out.println("yedhsh");
+				messageIDCache.add(event);
+				String msg = "";
+				for (MessageTextComponent msgp : event.data.message.message) {
+					if (msgp.equals(Type.LINK)) {
+						return;
 					}
-				});
+					msg += msgp.data;
+					System.out.println(event.data.userName + " said: " + msg);
+				}
+				onMessage(event.data.userName, msg);
+				if(messageIDCache != null)
+				for (int i = 0; i < messageIDCache.size(); i++) {
+					System.out.println(i + " = " + messageIDCache.get(i));
+				}
+			}
+		});
 		connectable.on(UserJoinEvent.class, new EventHandler<UserJoinEvent>() {
 			@Override
 			public void onEvent(UserJoinEvent event) {
@@ -114,15 +111,14 @@ public class MJR_BeamBot {
 				onJoin(event.data.username);
 			}
 		});
-		connectable.on(UserLeaveEvent.class,
-				new EventHandler<UserLeaveEvent>() {
-					@Override
-					public void onEvent(UserLeaveEvent event) {
-						if (viewers.contains(event.data.username.toLowerCase()))
-							viewers.remove(event.data.username.toLowerCase());
-						onPart(event.data.username);
-					}
-				});
+		connectable.on(UserLeaveEvent.class, new EventHandler<UserLeaveEvent>() {
+			@Override
+			public void onEvent(UserLeaveEvent event) {
+				if (viewers.contains(event.data.username.toLowerCase()))
+					viewers.remove(event.data.username.toLowerCase());
+				onPart(event.data.username);
+			}
+		});
 		try {
 			this.loadModerators();
 			this.loadViewers();
@@ -153,7 +149,7 @@ public class MJR_BeamBot {
 	protected String deleteUserMessages(String user) {
 		int messagesDeleted = 0;
 		for (IncomingMessageEvent message : messageIDCache) {
-			if (user.equalsIgnoreCase(message.data.user_name)) {
+			if (user.equalsIgnoreCase(message.data.userName)) {
 				connectable.delete(message.data);
 				messagesDeleted++;
 			}
@@ -167,7 +163,7 @@ public class MJR_BeamBot {
 	protected String deleteLastMessageForUser(String user) {
 		int lastMessage = 0;
 		for (int i = 0; i < messageIDCache.size(); i++) {
-			if (user.equalsIgnoreCase(messageIDCache.get(i).data.user_name)) {
+			if (user.equalsIgnoreCase(messageIDCache.get(i).data.userName)) {
 				lastMessage = i;
 			}
 		}
@@ -182,14 +178,11 @@ public class MJR_BeamBot {
 
 	protected void ban(String user) {
 		deleteUserMessages(user);
-		String path = BeamAPI.BASE_PATH.resolve(
-				"channels/" + connectedChannel.channel.id + "/users/"
-						+ user.toLowerCase()).toString();
+		String path = BeamAPI.BASE_PATH.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
 		HashMap<String, Object> map = new HashMap<>();
 		map.put("add", new String[] { "Banned" });
 		try {
-			Object result = beam.http.patch(path, Object.class, map).get(4,
-					TimeUnit.SECONDS);
+			Object result = beam.http.patch(path, Object.class, map).get(4, TimeUnit.SECONDS);
 			if ((result != null) && result.toString().contains("username")) {
 			}
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -201,14 +194,11 @@ public class MJR_BeamBot {
 	}
 
 	protected void unban(String user) {
-		String path = BeamAPI.BASE_PATH.resolve(
-				"channels/" + connectedChannel.channel.id + "/users/"
-						+ user.toLowerCase()).toString();
+		String path = BeamAPI.BASE_PATH.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
 		HashMap<String, Object> map = new HashMap<>();
 		map.put("add", new String[] { "" });
 		try {
-			Object result = beam.http.patch(path, Object.class, map).get(4,
-					TimeUnit.SECONDS);
+			Object result = beam.http.patch(path, Object.class, map).get(4, TimeUnit.SECONDS);
 			if ((result != null) && result.toString().contains("username")) {
 			}
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -220,12 +210,10 @@ public class MJR_BeamBot {
 
 	private void loadModerators() throws IOException {
 		String result = "";
-		URL url = new URL("https://beam.pro/api/v1/channels/"
-				+ connectedChannel.channel.id + "/users");
+		URL url = new URL("https://beam.pro/api/v1/channels/" + connectedChannel.channel.id + "/users");
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setRequestMethod("GET");
-		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				connection.getInputStream()));
+		BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 		String line = "";
 		while ((line = reader.readLine()) != null) {
 			result += line;
@@ -238,8 +226,7 @@ public class MJR_BeamBot {
 			if (result.contains("username")) {
 				username = result.substring(result.indexOf("username") + 11);
 				permission = username.substring(username.indexOf("name") + 7);
-				permission = permission.substring(0,
-						permission.indexOf("}") - 1);
+				permission = permission.substring(0, permission.indexOf("}") - 1);
 				username = username.substring(0, username.indexOf(",") - 1);
 				result = result.substring(result.indexOf("username") + 15);
 				if (permission.contains("Mod")) {
@@ -256,12 +243,10 @@ public class MJR_BeamBot {
 
 	private void loadViewers() throws IOException {
 		String result = "";
-		URL url = new URL("https://beam.pro/api/v1/chats/"
-				+ connectedChannel.channel.id + "/users");
+		URL url = new URL("https://beam.pro/api/v1/chats/" + connectedChannel.channel.id + "/users");
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setRequestMethod("GET");
-		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				connection.getInputStream()));
+		BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 		String line = "";
 		while ((line = reader.readLine()) != null) {
 			result += line;
@@ -344,6 +329,7 @@ public class MJR_BeamBot {
 	}
 
 	protected void onMessage(String sender, String message) {
+		System.out.println("here");
 	}
 
 	protected void onJoin(String sender) {
