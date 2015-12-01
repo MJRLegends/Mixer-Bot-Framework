@@ -86,7 +86,6 @@ public class MJR_BeamBot {
 		connectable.on(IncomingMessageEvent.class, new EventHandler<IncomingMessageEvent>() {
 			@Override
 			public void onEvent(IncomingMessageEvent event) {
-				System.out.println("yedhsh");
 				messageIDCache.add(event);
 				String msg = "";
 				for (MessageTextComponent msgp : event.data.message.message) {
@@ -94,13 +93,8 @@ public class MJR_BeamBot {
 						return;
 					}
 					msg += msgp.data;
-					System.out.println(event.data.userName + " said: " + msg);
 				}
 				onMessage(event.data.userName, msg);
-				if(messageIDCache != null)
-				for (int i = 0; i < messageIDCache.size(); i++) {
-					System.out.println(i + " = " + messageIDCache.get(i));
-				}
 			}
 		});
 		connectable.on(UserJoinEvent.class, new EventHandler<UserJoinEvent>() {
@@ -329,7 +323,6 @@ public class MJR_BeamBot {
 	}
 
 	protected void onMessage(String sender, String message) {
-		System.out.println("here");
 	}
 
 	protected void onJoin(String sender) {
