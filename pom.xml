@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
  
     <groupId>com.mjr.mjrbeam</groupId>
-    <artifactId>mjrbeamlibrary</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>MJR_Beam_Library</artifactId>
+    <version> v1.0.0Build</version>
     <repositories>
         <repository>
             <id>beam-snapshots</id>
