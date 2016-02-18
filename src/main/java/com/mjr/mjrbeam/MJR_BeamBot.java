@@ -57,7 +57,7 @@ public class MJR_BeamBot {
 			else{
 				if (debugMessages)
 					System.out.println("Using Authcode " + authcode);
-				user = beam.use(UsersService.class).login(username, password, authcode.toString()).get();
+				user = beam.use(UsersService.class).login(username, password, authcode).get();
 			}
 		} catch (ExecutionException e) {
 			if (debugMessages)
