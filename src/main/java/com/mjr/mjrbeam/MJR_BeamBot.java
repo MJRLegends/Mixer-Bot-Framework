@@ -172,7 +172,7 @@ public class MJR_BeamBot {
 
 	protected void ban(String user) {
 		deleteUserMessages(user);
-		String path = BeamAPI.BASE_PATH.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
+		String path = beam.basePath.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
 		HashMap<String, Object> map = new HashMap<>();
 		map.put("add", new String[] { "Banned" });
 		try {
@@ -188,7 +188,7 @@ public class MJR_BeamBot {
 	}
 
 	protected void unban(String user) {
-		String path = BeamAPI.BASE_PATH.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
+		String path = beam.basePath.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
 		HashMap<String, Object> map = new HashMap<>();
 		map.put("add", new String[] { "" });
 		try {
