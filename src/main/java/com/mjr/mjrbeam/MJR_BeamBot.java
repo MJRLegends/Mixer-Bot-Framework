@@ -38,7 +38,6 @@ public class MJR_BeamBot {
 	private BeamAPI beam = new BeamAPI();
 
 	private String username = "";
-	private String password = "";
 
 	private List<String> moderators = new ArrayList<String>();
 	private List<String> viewers = new ArrayList<String>();
@@ -48,13 +47,18 @@ public class MJR_BeamBot {
 	private boolean authenticated = false;
 	private boolean debugMessages = false;
 
-	protected final synchronized void connect(String channel, String username, String password) throws InterruptedException, ExecutionException {
+	protected final synchronized void connect(String channel, String username, String password, String authcode) throws InterruptedException, ExecutionException {
 		this.username = username;
-		this.password = password;
 		try {
 			if (debugMessages)
 				System.out.println("Connecting to Beam! Using Username: " + username);
-			user = beam.use(UsersService.class).login(username, password).get();
+			if(authcode == "" || authcode == null)
+				user = beam.use(UsersService.class).login(username, password).get();
+			else{
+				if (debugMessages)
+					System.out.println("Using Authcode " + authcode);
+				user = beam.use(UsersService.class).login(username, password, authcode.toString()).get();
+			}
 		} catch (ExecutionException e) {
 			if (debugMessages)
 				System.out.println("Failed To login to beam! check your login credentials!");
@@ -284,10 +288,6 @@ public class MJR_BeamBot {
 
 	public String getUsername() {
 		return username;
-	}
-
-	public String getPassword() {
-		return password;
 	}
 
 	public List<String> getModerators() {
