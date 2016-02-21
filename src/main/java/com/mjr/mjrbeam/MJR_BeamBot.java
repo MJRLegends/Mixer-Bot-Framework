@@ -86,10 +86,17 @@ public abstract class MJR_BeamBot {
 		connected = connectable.connect();
 
 		if (connected) {
+			if (debugMessages)
+				System.out.println("Trying to authenticate to Beam");
 			connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
 				@Override
 				public void onSuccess(AuthenticationReply reply) {
 					authenticated = true;
+				}
+				@Override
+				public void onFailure(Throwable err) {
+					if (debugMessages)
+						System.out.println(err.getMessage());
 				}
 			});
 		}
