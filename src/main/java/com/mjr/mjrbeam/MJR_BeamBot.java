@@ -59,7 +59,7 @@ public abstract class MJR_BeamBot {
 		try {
 			if (debugMessages)
 				System.out.println("Connecting to Beam! Using Username: " + username);
-			if(authcode == "" || authcode == null)
+			if(authcode.equals("") || authcode == null)
 				user = beam.use(UsersService.class).login(username, password).get();
 			else{
 				if (debugMessages)
