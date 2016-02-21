@@ -15,7 +15,6 @@ import java.util.concurrent.TimeoutException;
 import pro.beam.api.BeamAPI;
 import pro.beam.api.resource.BeamUser;
 import pro.beam.api.resource.chat.BeamChat;
-import pro.beam.api.resource.chat.BeamChatConnectable;
 import pro.beam.api.resource.chat.events.EventHandler;
 import pro.beam.api.resource.chat.events.IncomingMessageEvent;
 import pro.beam.api.resource.chat.events.UserJoinEvent;
@@ -26,27 +25,35 @@ import pro.beam.api.resource.chat.methods.AuthenticateMessage;
 import pro.beam.api.resource.chat.methods.ChatSendMethod;
 import pro.beam.api.resource.chat.replies.AuthenticationReply;
 import pro.beam.api.resource.chat.replies.ReplyHandler;
+import pro.beam.api.resource.chat.ws.BeamChatConnectable;
 import pro.beam.api.response.users.UserSearchResponse;
 import pro.beam.api.services.impl.ChatService;
 import pro.beam.api.services.impl.UsersService;
 
-public class MJR_BeamBot {
+public abstract class MJR_BeamBot {
 	private BeamUser user;
 	private BeamUser connectedChannel;
 	private BeamChat chat;
 	private BeamChatConnectable connectable;
-	private BeamAPI beam = new BeamAPI();
+	private BeamAPI beam;
 
 	private String username = "";
 
-	private List<String> moderators = new ArrayList<String>();
-	private List<String> viewers = new ArrayList<String>();
-	private List<IncomingMessageEvent> messageIDCache = new ArrayList<IncomingMessageEvent>();
+	private List<String> moderators;
+	private List<String> viewers;
+	private List<IncomingMessageEvent> messageIDCache;
 
 	private boolean connected = false;
 	private boolean authenticated = false;
 	private boolean debugMessages = false;
 
+	public MJR_BeamBot(){
+		beam = new BeamAPI();
+		moderators = new ArrayList<String>();
+		viewers = new ArrayList<String>();
+		messageIDCache = new ArrayList<IncomingMessageEvent>();
+	}
+	
 	protected final synchronized void connect(String channel, String username, String password, String authcode) throws InterruptedException, ExecutionException {
 		this.username = username;
 		try {
@@ -75,8 +82,8 @@ public class MJR_BeamBot {
 			return;
 		}
 		chat = beam.use(ChatService.class).findOne(connectedChannel.channel.id).get();
-		connectable = chat.makeConnectable(beam);
-		connected = connectable.connectBlocking();
+		connectable = chat.connectable(beam);
+		connected = connectable.connect();
 
 		if (connected) {
 			connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
@@ -132,7 +139,7 @@ public class MJR_BeamBot {
 	}
 
 	protected final synchronized void disconnect() {
-		connectable.close();
+		connectable.disconnect();
 		viewers.clear();
 		moderators.clear();
 		messageIDCache.clear();
@@ -322,12 +329,9 @@ public class MJR_BeamBot {
 			moderators.remove(moderator.toLowerCase());
 	}
 
-	protected void onMessage(String sender, String message) {
-	}
+	protected abstract void onMessage(String sender, String message);
 
-	protected void onJoin(String sender) {
-	}
+	protected abstract void onJoin(String sender);
 
-	protected void onPart(String sender) {
-	}
+	protected abstract void onPart(String sender);
 }
