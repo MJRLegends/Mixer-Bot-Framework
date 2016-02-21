@@ -104,6 +104,11 @@ public abstract class MJR_BeamBot {
 		connectable.on(IncomingMessageEvent.class, new EventHandler<IncomingMessageEvent>() {
 			@Override
 			public void onEvent(IncomingMessageEvent event) {
+				if(messageIDCache.size() >= 100){
+					messageIDCache.remove(0);
+					if (debugMessages)
+						System.out.println("Removed oldest message from the message cache due to limit of 100 messages in the cache has been reached");
+				}
 				messageIDCache.add(event);
 				String msg = "";
 				for (MessageTextComponent msgp : event.data.message.message) {
