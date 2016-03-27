@@ -7,12 +7,12 @@
     <groupId>com.mjr.mjrbeam</groupId>
     <artifactId>MJR_Beam_Library</artifactId>
     <version> v1.0.0Build</version>
-    <repositories>
-        <repository>
-            <id>beam-snapshots</id>
-            <url>https://maven.beam.pro/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
+	<repositories>
+		<repository>
+			<id>beam-snapshots</id>
+			<url>https://maven.beam.pro/content/repositories/snapshots/</url>
+		</repository>
+	</repositories>
        
     <dependencies>
         <dependency>
