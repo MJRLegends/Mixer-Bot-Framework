@@ -274,8 +274,8 @@ public abstract class MJR_BeamBot {
 		while (done == false) {
 			if (result.contains("userName")) {
 				username = result.substring(result.indexOf("userName") + 11);
-				username = username.substring(0, username.indexOf(",") - 1);
-				result = result.substring(result.indexOf("userName") + 15);
+				username = username.substring(0, username.indexOf("\"") - 1);
+				result = result.substring(result.indexOf(username) + 15);
 				if (!viewers.contains(username.toLowerCase()))
 					viewers.add(username.toLowerCase());
 			} else
