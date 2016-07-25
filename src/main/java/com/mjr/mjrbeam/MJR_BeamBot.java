@@ -86,8 +86,10 @@ public abstract class MJR_BeamBot {
 		connected = connectable.connect();
 
 		if (connected) {
-			if (debugMessages)
+			if (debugMessages){
+				System.out.println("The channel id for the channel you're joining is " + connectedChannel.channel.id);
 				System.out.println("Trying to authenticate to Beam");
+			}
 			connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
 				@Override
 				public void onSuccess(AuthenticationReply reply) {
@@ -275,7 +277,7 @@ public abstract class MJR_BeamBot {
 			if (result.contains("userName")) {
 				username = result.substring(result.indexOf("userName") + 11);
 				username = username.substring(0, username.indexOf("\"") - 1);
-				result = result.substring(result.indexOf(username) + 15);
+				result = result.substring(result.indexOf(username) + 10);
 				if (!viewers.contains(username.toLowerCase()))
 					viewers.add(username.toLowerCase());
 			} else
