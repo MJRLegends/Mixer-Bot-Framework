@@ -278,10 +278,8 @@ public abstract class MJR_BeamBot {
 				username = result.substring(result.indexOf("userName") + 11);
 				username = username.substring(0, username.indexOf("\""));
 				result = result.substring(result.indexOf(username) + 10);
-				if (!viewers.contains(username.toLowerCase())){
+				if (!viewers.contains(username.toLowerCase()))
 					viewers.add(username.toLowerCase());
-					System.out.println(username.toLowerCase());
-				}
 			} else
 				done = true;
 		}
