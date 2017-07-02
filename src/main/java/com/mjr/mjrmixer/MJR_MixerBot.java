@@ -1,4 +1,4 @@
-package com.mjr.mjrbeam;
+package com.mjr.mjrmixer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,7 +30,7 @@ import pro.beam.api.response.users.UserSearchResponse;
 import pro.beam.api.services.impl.ChatService;
 import pro.beam.api.services.impl.UsersService;
 
-public abstract class MJR_BeamBot {
+public abstract class MJR_MixerBot {
 	private BeamUser user;
 	private BeamUser connectedChannel;
 	private BeamChat chat;
@@ -47,7 +47,7 @@ public abstract class MJR_BeamBot {
 	private boolean authenticated = false;
 	private boolean debugMessages = false;
 
-	public MJR_BeamBot(){
+	public MJR_MixerBot(){
 		beam = new BeamAPI();
 		moderators = new ArrayList<String>();
 		viewers = new ArrayList<String>();
@@ -58,7 +58,7 @@ public abstract class MJR_BeamBot {
 		this.username = username;
 		try {
 			if (debugMessages)
-				System.out.println("Connecting to Beam! Using Username: " + username);
+				System.out.println("Connecting to Mixer! Using Username: " + username);
 			if(authcode.equals("") || authcode == null)
 				user = beam.use(UsersService.class).login(username, password).get();
 			else{
@@ -66,10 +66,10 @@ public abstract class MJR_BeamBot {
 					System.out.println("Using Authcode " + authcode);
 				user = beam.use(UsersService.class).login(username, password, authcode).get();
 			}
-		} catch (ExecutionException e) {
+		}
+		catch (ExecutionException e) {
 			if (debugMessages)
-				System.out.println("Failed To login to beam! check your login credentials!");
-			return;
+				System.out.println("Failed To login to Mixer! check your login credentials! Error: " + e.getMessage());
 		}
 		if (debugMessages)
 			System.out.println("Connecting to channel: " + channel);
@@ -88,12 +88,15 @@ public abstract class MJR_BeamBot {
 		if (connected) {
 			if (debugMessages){
 				System.out.println("The channel id for the channel you're joining is " + connectedChannel.channel.id);
-				System.out.println("Trying to authenticate to Beam");
+				System.out.println("Trying to authenticate to Mixer");
 			}
 			connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
 				@Override
 				public void onSuccess(AuthenticationReply reply) {
 					authenticated = true;
+					if (debugMessages){
+						System.out.println("Authenticated to Mixer");
+					}
 				}
 				@Override
 				public void onFailure(Throwable err) {
@@ -102,7 +105,10 @@ public abstract class MJR_BeamBot {
 				}
 			});
 		}
-
+		
+		if (debugMessages){
+			System.out.println("Setting up IncomingMessageEvent");
+		}
 		connectable.on(IncomingMessageEvent.class, new EventHandler<IncomingMessageEvent>() {
 			@Override
 			public void onEvent(IncomingMessageEvent event) {
@@ -122,6 +128,9 @@ public abstract class MJR_BeamBot {
 				onMessage(event.data.userName, msg);
 			}
 		});
+		if (debugMessages){
+			System.out.println("Setting up UserJoinEvent");
+		}
 		connectable.on(UserJoinEvent.class, new EventHandler<UserJoinEvent>() {
 			@Override
 			public void onEvent(UserJoinEvent event) {
@@ -130,6 +139,9 @@ public abstract class MJR_BeamBot {
 				onJoin(event.data.username);
 			}
 		});
+		if (debugMessages){
+			System.out.println("Setting up UserLeaveEvent");
+		}
 		connectable.on(UserLeaveEvent.class, new EventHandler<UserLeaveEvent>() {
 			@Override
 			public void onEvent(UserLeaveEvent event) {
@@ -138,6 +150,9 @@ public abstract class MJR_BeamBot {
 				onPart(event.data.username);
 			}
 		});
+		if (debugMessages){
+			System.out.println("Loading Moderators & Viewers");
+		}
 		try {
 			this.loadModerators();
 			this.loadViewers();
@@ -146,9 +161,11 @@ public abstract class MJR_BeamBot {
 		}
 		if (debugMessages) {
 			if (connected && authenticated)
-				System.out.println("Connected & Authenticated to Beam");
+				System.out.println("Connected & Authenticated to Mixer");
 			else if (connected && !authenticated)
-				System.out.println("Connected to Beam");
+				System.out.println("Connected to Mixer but not Authenticated");
+			else if (authenticated && !connected)
+				System.out.println("Authenticated to Mixer but not connected");
 		}
 	}
 
@@ -158,7 +175,7 @@ public abstract class MJR_BeamBot {
 		moderators.clear();
 		messageIDCache.clear();
 		if (debugMessages)
-			System.out.println("Disconnected from Beam!");
+			System.out.println("Disconnected from Mixer!");
 	}
 
 	public void sendMessage(String msg) {
@@ -247,7 +264,7 @@ public abstract class MJR_BeamBot {
 				permission = username.substring(username.indexOf("name") + 7);
 				permission = permission.substring(0, permission.indexOf("}") - 1);
 				username = username.substring(0, username.indexOf(",") - 1);
-				result = result.substring(result.indexOf("username") + 15);
+				result = result.substring(result.indexOf("username") + 8);
 				if (permission.contains("Mod")) {
 					if (!moderators.contains(username.toLowerCase()))
 						moderators.add(username.toLowerCase());
@@ -277,7 +294,7 @@ public abstract class MJR_BeamBot {
 			if (result.contains("userName")) {
 				username = result.substring(result.indexOf("userName") + 11);
 				username = username.substring(0, username.indexOf("\""));
-				result = result.substring(result.indexOf(username) + 10);
+				result = result.substring(result.indexOf(username));
 				if (!viewers.contains(username.toLowerCase()))
 					viewers.add(username.toLowerCase());
 			} else
@@ -342,7 +359,26 @@ public abstract class MJR_BeamBot {
 		if (moderators.contains(moderator.toLowerCase()))
 			moderators.remove(moderator.toLowerCase());
 	}
+	
+	public int getNumOfFollowers() {
+		return connectedChannel.channel.numFollowers;
+	}
+	
+	public String getAudience() {
+		return connectedChannel.channel.audience.toString();
+	}
+	
+	public int getNumOfTotalViewers() {
+		return connectedChannel.channel.viewersTotal;
+	}
+	
+	public boolean isOnline() {
+		return connectedChannel.channel.online;
+	}
 
+	public boolean isPartnered() {
+		return connectedChannel.channel.partnered;
+	}
 	protected abstract void onMessage(String sender, String message);
 
 	protected abstract void onJoin(String sender);
