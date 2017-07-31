@@ -169,7 +169,7 @@ public abstract class MJR_MixerBot {
 		}
 	}
 
-	protected final synchronized void disconnect() {
+	public final synchronized void disconnect() {
 		connectable.disconnect();
 		viewers.clear();
 		moderators.clear();
