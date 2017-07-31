@@ -312,11 +312,11 @@ public abstract class MJR_MixerBot {
 		return (moderators != null) && moderators.contains(user.toLowerCase());
 	}
 
-	protected boolean isConnected() {
+	public boolean isConnected() {
 		return connected;
 	}
 
-	protected boolean isAuthenticated() {
+	public boolean isAuthenticated() {
 		return authenticated;
 	}
 
