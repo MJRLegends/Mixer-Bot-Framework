@@ -114,6 +114,7 @@ public abstract class MJR_MixerBot {
 					msg += msgp.data;
 				}
 				onMessage(event.data.userName, msg);
+				deleteLastMessage();
 			}
 		});
 		if (debugMessages) {
@@ -391,6 +392,6 @@ public abstract class MJR_MixerBot {
 	protected abstract void onJoin(String sender);
 
 	protected abstract void onPart(String sender);
-	
+
 	protected abstract void onDebugMessage();
 }
