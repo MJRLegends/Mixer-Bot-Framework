@@ -42,10 +42,12 @@ public abstract class MJR_MixerBot {
 	private List<IncomingMessageEvent> messageIDCache;
 
 	private String name;
-	
+
 	private boolean connected = false;
 	private boolean authenticated = false;
 	private boolean debugMessages = false;
+
+	private List<String> outputMessages = new ArrayList<String>();
 
 	public MJR_MixerBot(String clientId, String name) {
 		this.name = name;
@@ -57,13 +59,13 @@ public abstract class MJR_MixerBot {
 
 	protected synchronized void joinMixerChannel(String channel) throws InterruptedException, ExecutionException, IOException {
 		if (debugMessages)
-			System.out.println("Connecting to channel: " + channel);
+			addOutputMessage("Connecting to channel: " + channel);
 		UserSearchResponse search = mixer.use(UsersService.class).search(channel.toLowerCase()).get();
 		if (search.size() > 0) {
 			connectedChannel = mixer.use(UsersService.class).findOne(search.get(0).id).get();
 		} else {
 			if (debugMessages)
-				System.out.println("No channel found!");
+				addOutputMessage("No channel found!");
 			return;
 		}
 		chat = mixer.use(ChatService.class).findOne(connectedChannel.channel.id).get();
@@ -72,28 +74,28 @@ public abstract class MJR_MixerBot {
 
 		if (connected) {
 			if (debugMessages) {
-				System.out.println("The channel id for the channel you're joining is " + connectedChannel.channel.id);
-				System.out.println("Trying to authenticate to Mixer");
+				addOutputMessage("The channel id for the channel you're joining is " + connectedChannel.channel.id);
+				addOutputMessage("Trying to authenticate to Mixer");
 			}
 			connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
 				@Override
 				public void onSuccess(AuthenticationReply reply) {
 					authenticated = true;
 					if (debugMessages) {
-						System.out.println("Authenticated to Mixer");
+						addOutputMessage("Authenticated to Mixer");
 					}
 				}
 
 				@Override
 				public void onFailure(Throwable err) {
 					if (debugMessages)
-						System.out.println(err.getMessage());
+						addOutputMessage(err.getMessage());
 				}
 			});
 		}
 
 		if (debugMessages) {
-			System.out.println("Setting up IncomingMessageEvent");
+			addOutputMessage("Setting up IncomingMessageEvent");
 		}
 		connectable.on(IncomingMessageEvent.class, new EventHandler<IncomingMessageEvent>() {
 			@Override
@@ -101,7 +103,7 @@ public abstract class MJR_MixerBot {
 				if (messageIDCache.size() >= 100) {
 					messageIDCache.remove(0);
 					if (debugMessages)
-						System.out.println("Removed oldest message from the message cache due to limit of 100 messages in the cache has been reached");
+						addOutputMessage("Removed oldest message from the message cache due to limit of 100 messages in the cache has been reached");
 				}
 				messageIDCache.add(event);
 				String msg = "";
@@ -115,7 +117,7 @@ public abstract class MJR_MixerBot {
 			}
 		});
 		if (debugMessages) {
-			System.out.println("Setting up UserJoinEvent");
+			addOutputMessage("Setting up UserJoinEvent");
 		}
 		connectable.on(UserJoinEvent.class, new EventHandler<UserJoinEvent>() {
 			@Override
@@ -126,7 +128,7 @@ public abstract class MJR_MixerBot {
 			}
 		});
 		if (debugMessages) {
-			System.out.println("Setting up UserLeaveEvent");
+			addOutputMessage("Setting up UserLeaveEvent");
 		}
 		connectable.on(UserLeaveEvent.class, new EventHandler<UserLeaveEvent>() {
 			@Override
@@ -137,7 +139,7 @@ public abstract class MJR_MixerBot {
 			}
 		});
 		if (debugMessages) {
-			System.out.println("Loading Moderators & Viewers");
+			addOutputMessage("Loading Moderators & Viewers");
 		}
 		try {
 			this.loadModerators();
@@ -147,11 +149,11 @@ public abstract class MJR_MixerBot {
 		}
 		if (debugMessages) {
 			if (connected && authenticated)
-				System.out.println("Connected & Authenticated to Mixer");
+				addOutputMessage("Connected & Authenticated to Mixer");
 			else if (connected && !authenticated)
-				System.out.println("Connected to Mixer but not Authenticated");
+				addOutputMessage("Connected to Mixer but not Authenticated");
 			else if (authenticated && !connected)
-				System.out.println("Authenticated to Mixer but not connected");
+				addOutputMessage("Authenticated to Mixer but not connected");
 		}
 	}
 
@@ -161,7 +163,7 @@ public abstract class MJR_MixerBot {
 		moderators.clear();
 		messageIDCache.clear();
 		if (debugMessages)
-			System.out.println("Disconnected from Mixer!");
+			addOutputMessage("Disconnected from Mixer!");
 	}
 
 	public void sendMessage(String msg) {
@@ -208,11 +210,11 @@ public abstract class MJR_MixerBot {
 			if ((result != null) && result.toString().contains("username")) {
 			}
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			System.out.println(e.getMessage());
+			addOutputMessage(e.getMessage());
 			return;
 		}
 		if (debugMessages)
-			System.out.println("Banned " + user);
+			addOutputMessage("Banned " + user);
 	}
 
 	protected void unban(String user) {
@@ -224,10 +226,10 @@ public abstract class MJR_MixerBot {
 			if ((result != null) && result.toString().contains("username")) {
 			}
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			System.out.println(e.getMessage());
+			addOutputMessage(e.getMessage());
 		}
 		if (debugMessages)
-			System.out.println("unban " + user);
+			addOutputMessage("unban " + user);
 	}
 
 	private void loadModerators() throws IOException {
@@ -259,7 +261,7 @@ public abstract class MJR_MixerBot {
 				done = true;
 		}
 		if (debugMessages) {
-			System.out.println("Found " + moderators.size() + " moderators!");
+			addOutputMessage("Found " + moderators.size() + " moderators!");
 		}
 	}
 
@@ -287,7 +289,7 @@ public abstract class MJR_MixerBot {
 				done = true;
 		}
 		if (debugMessages) {
-			System.out.println("Found " + viewers.size() + " viewers!");
+			addOutputMessage("Found " + viewers.size() + " viewers!");
 		}
 	}
 
@@ -306,9 +308,9 @@ public abstract class MJR_MixerBot {
 		return authenticated;
 	}
 
-    public String getBotName() {
-    	return this.name;
-    }
+	public String getBotName() {
+		return this.name;
+	}
 
 	public List<String> getModerators() {
 		return moderators;
@@ -320,6 +322,28 @@ public abstract class MJR_MixerBot {
 
 	protected void setdebug(boolean value) {
 		debugMessages = value;
+	}
+
+	public List<String> getOutputMessages() {
+		return outputMessages;
+	}
+
+	public void setOutputMessages(List<String> outputMessages) {
+		this.outputMessages = outputMessages;
+		this.onDebugMessage();
+	}
+
+	public void addOutputMessage(String outputMessage) {
+		this.outputMessages.add(outputMessage);
+		this.onDebugMessage();
+	}
+
+	public void removeOutputMessage(String outputMessage) {
+		this.outputMessages.remove(outputMessage);
+	}
+
+	public void clearOutputMessages() {
+		this.outputMessages.clear();
 	}
 
 	protected void addViewer(String viewer) {
@@ -367,4 +391,6 @@ public abstract class MJR_MixerBot {
 	protected abstract void onJoin(String sender);
 
 	protected abstract void onPart(String sender);
+	
+	protected abstract void onDebugMessage();
 }
