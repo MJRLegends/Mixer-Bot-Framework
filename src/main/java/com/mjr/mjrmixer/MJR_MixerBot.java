@@ -12,81 +12,66 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import pro.beam.api.BeamAPI;
-import pro.beam.api.resource.BeamUser;
-import pro.beam.api.resource.chat.BeamChat;
-import pro.beam.api.resource.chat.events.EventHandler;
-import pro.beam.api.resource.chat.events.IncomingMessageEvent;
-import pro.beam.api.resource.chat.events.UserJoinEvent;
-import pro.beam.api.resource.chat.events.UserLeaveEvent;
-import pro.beam.api.resource.chat.events.data.MessageComponent.MessageTextComponent;
-import pro.beam.api.resource.chat.events.data.MessageComponent.MessageTextComponent.Type;
-import pro.beam.api.resource.chat.methods.AuthenticateMessage;
-import pro.beam.api.resource.chat.methods.ChatSendMethod;
-import pro.beam.api.resource.chat.replies.AuthenticationReply;
-import pro.beam.api.resource.chat.replies.ReplyHandler;
-import pro.beam.api.resource.chat.ws.BeamChatConnectable;
-import pro.beam.api.response.users.UserSearchResponse;
-import pro.beam.api.services.impl.ChatService;
-import pro.beam.api.services.impl.UsersService;
+import com.mixer.api.MixerAPI;
+import com.mixer.api.resource.MixerUser;
+import com.mixer.api.resource.chat.MixerChat;
+import com.mixer.api.resource.chat.events.EventHandler;
+import com.mixer.api.resource.chat.events.IncomingMessageEvent;
+import com.mixer.api.resource.chat.events.UserJoinEvent;
+import com.mixer.api.resource.chat.events.UserLeaveEvent;
+import com.mixer.api.resource.chat.events.data.MessageComponent.MessageTextComponent;
+import com.mixer.api.resource.chat.events.data.MessageComponent.MessageTextComponent.Type;
+import com.mixer.api.resource.chat.methods.AuthenticateMessage;
+import com.mixer.api.resource.chat.methods.ChatSendMethod;
+import com.mixer.api.resource.chat.replies.AuthenticationReply;
+import com.mixer.api.resource.chat.replies.ReplyHandler;
+import com.mixer.api.resource.chat.ws.MixerChatConnectable;
+import com.mixer.api.response.users.UserSearchResponse;
+import com.mixer.api.services.impl.ChatService;
+import com.mixer.api.services.impl.UsersService;
 
 public abstract class MJR_MixerBot {
-	private BeamUser user;
-	private BeamUser connectedChannel;
-	private BeamChat chat;
-	private BeamChatConnectable connectable;
-	private BeamAPI beam;
-
-	private String username = "";
+	private MixerUser user;
+	private MixerUser connectedChannel;
+	private MixerChat chat;
+	private MixerChatConnectable connectable;
+	private MixerAPI mixer;
 
 	private List<String> moderators;
 	private List<String> viewers;
 	private List<IncomingMessageEvent> messageIDCache;
 
+	private String name;
+	
 	private boolean connected = false;
 	private boolean authenticated = false;
 	private boolean debugMessages = false;
 
-	public MJR_MixerBot(){
-		beam = new BeamAPI();
+	public MJR_MixerBot(String clientId, String name) {
+		this.name = name;
+		mixer = new MixerAPI(clientId);
 		moderators = new ArrayList<String>();
 		viewers = new ArrayList<String>();
 		messageIDCache = new ArrayList<IncomingMessageEvent>();
 	}
-	
-	protected final synchronized void connect(String channel, String username, String password, String authcode) throws InterruptedException, ExecutionException {
-		this.username = username;
-		try {
-			if (debugMessages)
-				System.out.println("Connecting to Mixer! Using Username: " + username);
-			if(authcode.equals("") || authcode == null)
-				user = beam.use(UsersService.class).login(username, password).get();
-			else{
-				if (debugMessages)
-					System.out.println("Using Authcode " + authcode);
-				user = beam.use(UsersService.class).login(username, password, authcode).get();
-			}
-		}
-		catch (ExecutionException e) {
-			if (debugMessages)
-				System.out.println("Failed To login to Mixer! check your login credentials! Error: " + e.getMessage());
-		}
+
+	protected synchronized void joinMixerChannel(String channel) throws InterruptedException, ExecutionException, IOException {
 		if (debugMessages)
 			System.out.println("Connecting to channel: " + channel);
-		UserSearchResponse search = beam.use(UsersService.class).search(channel.toLowerCase()).get();
+		UserSearchResponse search = mixer.use(UsersService.class).search(channel.toLowerCase()).get();
 		if (search.size() > 0) {
-			connectedChannel = beam.use(UsersService.class).findOne(search.get(0).id).get();
+			connectedChannel = mixer.use(UsersService.class).findOne(search.get(0).id).get();
 		} else {
 			if (debugMessages)
 				System.out.println("No channel found!");
 			return;
 		}
-		chat = beam.use(ChatService.class).findOne(connectedChannel.channel.id).get();
-		connectable = chat.connectable(beam);
+		chat = mixer.use(ChatService.class).findOne(connectedChannel.channel.id).get();
+		connectable = chat.connectable(mixer);
 		connected = connectable.connect();
 
 		if (connected) {
-			if (debugMessages){
+			if (debugMessages) {
 				System.out.println("The channel id for the channel you're joining is " + connectedChannel.channel.id);
 				System.out.println("Trying to authenticate to Mixer");
 			}
@@ -94,10 +79,11 @@ public abstract class MJR_MixerBot {
 				@Override
 				public void onSuccess(AuthenticationReply reply) {
 					authenticated = true;
-					if (debugMessages){
+					if (debugMessages) {
 						System.out.println("Authenticated to Mixer");
 					}
 				}
+
 				@Override
 				public void onFailure(Throwable err) {
 					if (debugMessages)
@@ -105,14 +91,14 @@ public abstract class MJR_MixerBot {
 				}
 			});
 		}
-		
-		if (debugMessages){
+
+		if (debugMessages) {
 			System.out.println("Setting up IncomingMessageEvent");
 		}
 		connectable.on(IncomingMessageEvent.class, new EventHandler<IncomingMessageEvent>() {
 			@Override
 			public void onEvent(IncomingMessageEvent event) {
-				if(messageIDCache.size() >= 100){
+				if (messageIDCache.size() >= 100) {
 					messageIDCache.remove(0);
 					if (debugMessages)
 						System.out.println("Removed oldest message from the message cache due to limit of 100 messages in the cache has been reached");
@@ -128,7 +114,7 @@ public abstract class MJR_MixerBot {
 				onMessage(event.data.userName, msg);
 			}
 		});
-		if (debugMessages){
+		if (debugMessages) {
 			System.out.println("Setting up UserJoinEvent");
 		}
 		connectable.on(UserJoinEvent.class, new EventHandler<UserJoinEvent>() {
@@ -139,7 +125,7 @@ public abstract class MJR_MixerBot {
 				onJoin(event.data.username);
 			}
 		});
-		if (debugMessages){
+		if (debugMessages) {
 			System.out.println("Setting up UserLeaveEvent");
 		}
 		connectable.on(UserLeaveEvent.class, new EventHandler<UserLeaveEvent>() {
@@ -150,7 +136,7 @@ public abstract class MJR_MixerBot {
 				onPart(event.data.username);
 			}
 		});
-		if (debugMessages){
+		if (debugMessages) {
 			System.out.println("Loading Moderators & Viewers");
 		}
 		try {
@@ -214,11 +200,11 @@ public abstract class MJR_MixerBot {
 
 	protected void ban(String user) {
 		deleteUserMessages(user);
-		String path = beam.basePath.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
+		String path = mixer.basePath.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
 		HashMap<String, Object> map = new HashMap<>();
 		map.put("add", new String[] { "Banned" });
 		try {
-			Object result = beam.http.patch(path, Object.class, map).get(4, TimeUnit.SECONDS);
+			Object result = mixer.http.patch(path, Object.class, map).get(4, TimeUnit.SECONDS);
 			if ((result != null) && result.toString().contains("username")) {
 			}
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -230,11 +216,11 @@ public abstract class MJR_MixerBot {
 	}
 
 	protected void unban(String user) {
-		String path = beam.basePath.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
+		String path = mixer.basePath.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
 		HashMap<String, Object> map = new HashMap<>();
 		map.put("add", new String[] { "" });
 		try {
-			Object result = beam.http.patch(path, Object.class, map).get(4, TimeUnit.SECONDS);
+			Object result = mixer.http.patch(path, Object.class, map).get(4, TimeUnit.SECONDS);
 			if ((result != null) && result.toString().contains("username")) {
 			}
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -320,13 +306,9 @@ public abstract class MJR_MixerBot {
 		return authenticated;
 	}
 
-	public String getBotName() {
-		return username;
-	}
-
-	public String getUsername() {
-		return username;
-	}
+    public String getBotName() {
+    	return this.name;
+    }
 
 	public List<String> getModerators() {
 		return moderators;
@@ -359,19 +341,19 @@ public abstract class MJR_MixerBot {
 		if (moderators.contains(moderator.toLowerCase()))
 			moderators.remove(moderator.toLowerCase());
 	}
-	
+
 	public int getNumOfFollowers() {
 		return connectedChannel.channel.numFollowers;
 	}
-	
+
 	public String getAudience() {
 		return connectedChannel.channel.audience.toString();
 	}
-	
+
 	public int getNumOfTotalViewers() {
 		return connectedChannel.channel.viewersTotal;
 	}
-	
+
 	public boolean isOnline() {
 		return connectedChannel.channel.online;
 	}
@@ -379,6 +361,7 @@ public abstract class MJR_MixerBot {
 	public boolean isPartnered() {
 		return connectedChannel.channel.partnered;
 	}
+
 	protected abstract void onMessage(String sender, String message);
 
 	protected abstract void onJoin(String sender);
