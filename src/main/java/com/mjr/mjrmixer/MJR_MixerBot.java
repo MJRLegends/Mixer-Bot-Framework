@@ -159,6 +159,7 @@ public abstract class MJR_MixerBot {
 	}
 
 	public final synchronized void disconnect() {
+	    this.sendMessage(this.getBotName() + " Disconnected!");
 		connectable.disconnect();
 		viewers.clear();
 		moderators.clear();
