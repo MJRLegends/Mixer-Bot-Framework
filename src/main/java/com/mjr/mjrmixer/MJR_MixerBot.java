@@ -49,9 +49,9 @@ public abstract class MJR_MixerBot {
 
 	private List<String> outputMessages = new ArrayList<String>();
 
-	public MJR_MixerBot(String clientId, String name) {
+	public MJR_MixerBot(String clientId, String authcode, String name) {
 		this.name = name;
-		mixer = new MixerAPI(clientId);
+		mixer = new MixerAPI(clientId, authcode);
 		moderators = new ArrayList<String>();
 		viewers = new ArrayList<String>();
 		messageIDCache = new ArrayList<IncomingMessageEvent>();
@@ -114,7 +114,6 @@ public abstract class MJR_MixerBot {
 					msg += msgp.data;
 				}
 				onMessage(event.data.userName, msg);
-				deleteLastMessage();
 			}
 		});
 		if (debugMessages) {
@@ -156,6 +155,7 @@ public abstract class MJR_MixerBot {
 			else if (authenticated && !connected)
 				addOutputMessage("Authenticated to Mixer but not connected");
 		}
+		sendMessage(this.getBotName() + " Connected!");
 	}
 
 	public final synchronized void disconnect() {
