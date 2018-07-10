@@ -77,17 +77,17 @@ public abstract class MJR_MixerBot {
 		connected = connectable.connect();
 
 		if (connected) {
-            if (debugMessages) {
-                addOutputMessage("The channel id for the channel you're joining is " + connectedChannel.channel.id);
-                addOutputMessage("Trying to authenticate to Mixer");
-            }
-            connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
-                @Override
-                public void onSuccess(AuthenticationReply reply) {
-                    authenticated = true;
-                    if (debugMessages) {
-                        addOutputMessage("Authenticated to Mixer");
-                    }
+			if (debugMessages) {
+				addOutputMessage("The channel id for the channel you're joining is " + connectedChannel.channel.id);
+				addOutputMessage("Trying to authenticate to Mixer");
+			}
+			connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
+				@Override
+				public void onSuccess(AuthenticationReply reply) {
+					authenticated = true;
+					if (debugMessages) {
+						addOutputMessage("Authenticated to Mixer");
+					}
 
 				}
 
