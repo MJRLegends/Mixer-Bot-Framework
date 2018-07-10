@@ -160,11 +160,9 @@ public abstract class MJR_MixerBot {
 			else if (authenticated && !connected)
 				addOutputMessage("Authenticated to Mixer but not connected");
 		}
-		sendMessage(this.getBotName() + " Connected!");
 	}
 
 	public final synchronized void disconnect() {
-		this.sendMessage(this.getBotName() + " Disconnected!");
 		connectable.disconnect();
 		viewers.clear();
 		moderators.clear();
@@ -241,7 +239,7 @@ public abstract class MJR_MixerBot {
 
 	private void loadModerators() throws IOException {
 		String result = "";
-		URL url = new URL("https://beam.pro/api/v1/channels/" + connectedChannel.channel.id + "/users");
+		URL url = new URL("https://mixer.com/api/v1/channels/" + connectedChannel.channel.id + "/users");
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setRequestMethod("GET");
 		BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -274,7 +272,7 @@ public abstract class MJR_MixerBot {
 
 	private void loadViewers() throws IOException {
 		String result = "";
-		URL url = new URL("https://beam.pro/api/v1/chats/" + connectedChannel.channel.id + "/users");
+		URL url = new URL("https://mixer.com/api/v1/chats/" + connectedChannel.channel.id + "/users");
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setRequestMethod("GET");
 		BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
