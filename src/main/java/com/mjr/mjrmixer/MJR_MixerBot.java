@@ -60,6 +60,9 @@ public abstract class MJR_MixerBot {
 	protected synchronized void joinMixerChannel(String channel) throws InterruptedException, ExecutionException, IOException {
 		if (debugMessages)
 			addOutputMessage("Connecting to channel: " + channel);
+
+		user = mixer.use(UsersService.class).getCurrent().get();
+
 		UserSearchResponse search = mixer.use(UsersService.class).search(channel.toLowerCase()).get();
 		if (search.size() > 0) {
 			connectedChannel = mixer.use(UsersService.class).findOne(search.get(0).id).get();
@@ -68,22 +71,24 @@ public abstract class MJR_MixerBot {
 				addOutputMessage("No channel found!");
 			return;
 		}
+
 		chat = mixer.use(ChatService.class).findOne(connectedChannel.channel.id).get();
 		connectable = chat.connectable(mixer);
 		connected = connectable.connect();
 
 		if (connected) {
-			if (debugMessages) {
-				addOutputMessage("The channel id for the channel you're joining is " + connectedChannel.channel.id);
-				addOutputMessage("Trying to authenticate to Mixer");
-			}
-			connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
-				@Override
-				public void onSuccess(AuthenticationReply reply) {
-					authenticated = true;
-					if (debugMessages) {
-						addOutputMessage("Authenticated to Mixer");
-					}
+            if (debugMessages) {
+                addOutputMessage("The channel id for the channel you're joining is " + connectedChannel.channel.id);
+                addOutputMessage("Trying to authenticate to Mixer");
+            }
+            connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
+                @Override
+                public void onSuccess(AuthenticationReply reply) {
+                    authenticated = true;
+                    if (debugMessages) {
+                        addOutputMessage("Authenticated to Mixer");
+                    }
+
 				}
 
 				@Override
@@ -159,7 +164,7 @@ public abstract class MJR_MixerBot {
 	}
 
 	public final synchronized void disconnect() {
-	    this.sendMessage(this.getBotName() + " Disconnected!");
+		this.sendMessage(this.getBotName() + " Disconnected!");
 		connectable.disconnect();
 		viewers.clear();
 		moderators.clear();
