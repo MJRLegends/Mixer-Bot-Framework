@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -169,6 +170,8 @@ public abstract class MJR_MixerBot {
 		messageIDCache.clear();
 		if (debugMessages)
 			addOutputMessage("Disconnected from Mixer!");
+		this.connected = false;
+		this.authenticated = false;
 	}
 
 	public void sendMessage(String msg) {
@@ -383,12 +386,16 @@ public abstract class MJR_MixerBot {
 		return connectedChannel.channel.viewersTotal;
 	}
 
-	public boolean isOnline() {
+	public boolean isStreaming() {
 		return connectedChannel.channel.online;
 	}
 
 	public boolean isPartnered() {
 		return connectedChannel.channel.partnered;
+	}
+	
+	public Date getUpdatedAt() {
+		return connectedChannel.channel.updatedAt;
 	}
 
 	protected abstract void onMessage(String sender, String message);
