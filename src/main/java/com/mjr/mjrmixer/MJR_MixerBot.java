@@ -375,27 +375,41 @@ public abstract class MJR_MixerBot {
 	}
 
 	public int getNumOfFollowers() {
+		updateConnectedChannel();
 		return connectedChannel.channel.numFollowers;
 	}
 
 	public String getAudience() {
+		updateConnectedChannel();
 		return connectedChannel.channel.audience.toString();
 	}
 
 	public int getNumOfTotalViewers() {
+		updateConnectedChannel();
 		return connectedChannel.channel.viewersTotal;
 	}
 
 	public boolean isStreaming() {
+		updateConnectedChannel();
 		return connectedChannel.channel.online;
 	}
 
 	public boolean isPartnered() {
+		updateConnectedChannel();
 		return connectedChannel.channel.partnered;
 	}
 	
 	public Date getUpdatedAt() {
+		updateConnectedChannel();
 		return connectedChannel.channel.updatedAt;
+	}
+	
+	public void updateConnectedChannel() {
+		try {
+			connectedChannel = mixer.use(UsersService.class).findOne(connectedChannel.id).get(); // Used to update API info
+		} catch (InterruptedException | ExecutionException e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected abstract void onMessage(String sender, String message);
