@@ -58,6 +58,13 @@ public abstract class MJR_MixerBot {
 		messageIDCache = new ArrayList<IncomingMessageEvent>();
 	}
 
+	/**
+	 * Used to connect the bot to Mixer & join a channel
+	 * @param channel
+	 * @throws InterruptedException
+	 * @throws ExecutionException
+	 * @throws IOException
+	 */
 	protected synchronized void joinMixerChannel(String channel) throws InterruptedException, ExecutionException, IOException {
 		if (debugMessages)
 			addOutputMessage("Connecting to channel: " + channel);
@@ -163,6 +170,9 @@ public abstract class MJR_MixerBot {
 		}
 	}
 
+	/**
+	 * Used to disconnect the bot from a channel
+	 */
 	public final synchronized void disconnect() {
 		connectable.disconnect();
 		viewers.clear();
@@ -174,10 +184,19 @@ public abstract class MJR_MixerBot {
 		this.authenticated = false;
 	}
 
+	/**
+	 * Send a message to the connected channels chat
+	 * @param msg
+	 */
 	public void sendMessage(String msg) {
 		connectable.send(ChatSendMethod.of(msg));
 	}
 
+	/**
+	 * Deletes all messages in connected channels chat for a user
+	 * @param user
+	 * @return
+	 */
 	protected String deleteUserMessages(String user) {
 		int messagesDeleted = 0;
 		for (IncomingMessageEvent message : messageIDCache) {
@@ -192,6 +211,11 @@ public abstract class MJR_MixerBot {
 		return "";
 	}
 
+	/**
+	 * Deletes the last message in connected channels chat for a user
+	 * @param user
+	 * @return
+	 */
 	protected String deleteLastMessageForUser(String user) {
 		int lastMessage = 0;
 		for (int i = 0; i < messageIDCache.size(); i++) {
@@ -203,11 +227,19 @@ public abstract class MJR_MixerBot {
 		return "Deleted last message for " + user + "!";
 	}
 
+	/**
+	 * Deletes the last message in connected channels chat for any user
+	 * @return
+	 */
 	protected String deleteLastMessage() {
 		connectable.delete(messageIDCache.get(messageIDCache.size() - 1).data);
 		return "Deleted last message!";
 	}
 
+	/**
+	 * Used to ban a user from the connected channels chat
+	 * @param user
+	 */
 	protected void ban(String user) {
 		deleteUserMessages(user);
 		String path = mixer.basePath.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
@@ -225,6 +257,10 @@ public abstract class MJR_MixerBot {
 			addOutputMessage("Banned " + user);
 	}
 
+	/**
+	 * Used to unban a user from the connected channels chat
+	 * @param user
+	 */
 	protected void unban(String user) {
 		String path = mixer.basePath.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
 		HashMap<String, Object> map = new HashMap<>();
