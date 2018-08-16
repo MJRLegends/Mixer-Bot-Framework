@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
  
     <groupId>com.mjr.mjrmixer</groupId>
-    <artifactId>MJR_Mixer_Library</artifactId>
+    <artifactId>Mixer-Bot-Framework</artifactId>
     <version>v1.0.0Build</version>
 	<repositories>
   <repository>
