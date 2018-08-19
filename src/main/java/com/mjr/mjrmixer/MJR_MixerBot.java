@@ -391,7 +391,7 @@ public abstract class MJR_MixerBot {
 	}
 
 	protected void addViewer(String viewer) {
-		if (!viewers.contains(viewer.toLowerCase()))
+		if (!viewers.contains(viewer.toLowerCase()) && !viewer.equals(""))
 			this.viewers.add(viewer.toLowerCase());
 	}
 
@@ -401,7 +401,7 @@ public abstract class MJR_MixerBot {
 	}
 
 	protected void addModerator(String moderator) {
-		if (!moderators.contains(moderator.toLowerCase()))
+		if (!moderators.contains(moderator.toLowerCase()) && !moderator.equals(""))
 			this.moderators.add(moderator.toLowerCase());
 	}
 
