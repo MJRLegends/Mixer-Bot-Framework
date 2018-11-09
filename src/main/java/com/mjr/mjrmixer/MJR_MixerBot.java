@@ -104,7 +104,7 @@ public abstract class MJR_MixerBot {
 		chat = mixer.use(ChatService.class).findOne(connectedChannel.channel.id).get();
 		connectable = chat.connectable(mixer);
 		connected = connectable.connect();
-		if (liveEvents.isEmpty()) {
+		if (!liveEvents.isEmpty()) {
 			constellation = new MixerConstellation();
 			constellationConnectable = constellation.connectable(mixer);
 			constellationConnectable.connect();
@@ -184,14 +184,16 @@ public abstract class MJR_MixerBot {
 		if (debugMessages) {
 			addOutputMessage("Loading Moderators & Viewers");
 		}
-		constellationConnectable.on(LiveEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<LiveEvent>() {
-			@Override
-			public void onEvent(LiveEvent event) {
-				onLiveEvent(event);
+		if (!liveEvents.isEmpty()) {
+			constellationConnectable.on(LiveEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<LiveEvent>() {
+				@Override
+				public void onEvent(LiveEvent event) {
+					onLiveEvent(event);
+				}
+			});
+			if (debugMessages) {
+				addOutputMessage("Setting up ConstellationEvent");
 			}
-		});
-		if (debugMessages) {
-			addOutputMessage("Setting up ConstellationEvent");
 		}
 		try {
 			this.loadModerators();
