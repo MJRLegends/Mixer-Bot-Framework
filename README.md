@@ -8,7 +8,7 @@ In your `pom.xml` add:
 ```xml
 <repositories>
   <repository>
-    <id>mjrlegends-maven</id>
+    <id>maven.mjrlegends.com</id>
     <url>https://maven.mjrlegends.com/</url>
   </repository>
 </repositories>
