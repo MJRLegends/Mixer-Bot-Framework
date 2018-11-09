@@ -67,7 +67,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Used to connect the bot to Mixer & join a channel
-	 * 
+	 *
 	 * @param channel
 	 * @throws InterruptedException
 	 * @throws ExecutionException
@@ -79,7 +79,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Used to connect the bot to Mixer & join a channel
-	 * 
+	 *
 	 * @param channel
 	 * @param liveEvents
 	 * @throws InterruptedException
@@ -227,7 +227,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Send a message to the connected channels chat
-	 * 
+	 *
 	 * @param msg
 	 */
 	public void sendMessage(String msg) {
@@ -236,7 +236,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Deletes all messages in connected channels chat for a user
-	 * 
+	 *
 	 * @param user
 	 * @return
 	 */
@@ -256,7 +256,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Deletes the last message in connected channels chat for a user
-	 * 
+	 *
 	 * @param user
 	 * @return
 	 */
@@ -273,7 +273,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Deletes the last message in connected channels chat for any user
-	 * 
+	 *
 	 * @return
 	 */
 	protected String deleteLastMessage() {
@@ -283,7 +283,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Used to ban a user from the connected channels chat
-	 * 
+	 *
 	 * @param user
 	 */
 	protected void ban(String user) {
@@ -305,7 +305,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Used to unban a user from the connected channels chat
-	 * 
+	 *
 	 * @param user
 	 */
 	protected void unban(String user) {
@@ -502,6 +502,6 @@ public abstract class MJR_MixerBot {
 	protected abstract void onPart(String sender);
 
 	protected abstract void onDebugMessage();
-	
+
 	protected abstract void onLiveEvent(LiveEvent event);
 }
