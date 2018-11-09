@@ -27,6 +27,11 @@ import com.mixer.api.resource.chat.methods.ChatSendMethod;
 import com.mixer.api.resource.chat.replies.AuthenticationReply;
 import com.mixer.api.resource.chat.replies.ReplyHandler;
 import com.mixer.api.resource.chat.ws.MixerChatConnectable;
+import com.mixer.api.resource.constellation.MixerConstellation;
+import com.mixer.api.resource.constellation.events.LiveEvent;
+import com.mixer.api.resource.constellation.methods.LiveSubscribeMethod;
+import com.mixer.api.resource.constellation.methods.data.LiveRequestData;
+import com.mixer.api.resource.constellation.ws.MixerConstellationConnectable;
 import com.mixer.api.response.users.UserSearchResponse;
 import com.mixer.api.services.impl.ChatService;
 import com.mixer.api.services.impl.UsersService;
@@ -35,7 +40,9 @@ public abstract class MJR_MixerBot {
 	private MixerUser user;
 	private MixerUser connectedChannel;
 	private MixerChat chat;
+	private MixerConstellation constellation;
 	private MixerChatConnectable connectable;
+	private MixerConstellationConnectable constellationConnectable;
 	private MixerAPI mixer;
 
 	private List<String> moderators;
@@ -60,12 +67,26 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Used to connect the bot to Mixer & join a channel
+	 * 
 	 * @param channel
 	 * @throws InterruptedException
 	 * @throws ExecutionException
 	 * @throws IOException
 	 */
 	protected synchronized void joinMixerChannel(String channel) throws InterruptedException, ExecutionException, IOException {
+		joinMixerChannel(channel, new ArrayList<String>());
+	}
+
+	/**
+	 * Used to connect the bot to Mixer & join a channel
+	 * 
+	 * @param channel
+	 * @param liveEvents
+	 * @throws InterruptedException
+	 * @throws ExecutionException
+	 * @throws IOException
+	 */
+	protected synchronized void joinMixerChannel(String channel, ArrayList<String> liveEvents) throws InterruptedException, ExecutionException, IOException {
 		if (debugMessages)
 			addOutputMessage("Connecting to channel: " + channel);
 
@@ -83,7 +104,16 @@ public abstract class MJR_MixerBot {
 		chat = mixer.use(ChatService.class).findOne(connectedChannel.channel.id).get();
 		connectable = chat.connectable(mixer);
 		connected = connectable.connect();
-
+		if (liveEvents.isEmpty()) {
+			constellation = new MixerConstellation();
+			constellationConnectable = constellation.connectable(mixer);
+			constellationConnectable.connect();
+			LiveRequestData test = new LiveRequestData();
+			test.events = liveEvents;
+			LiveSubscribeMethod live = new LiveSubscribeMethod();
+			live.params = test;
+			constellationConnectable.send(live);
+		}
 		if (connected) {
 			if (debugMessages) {
 				addOutputMessage("The channel id for the channel you're joining is " + connectedChannel.channel.id);
@@ -154,6 +184,15 @@ public abstract class MJR_MixerBot {
 		if (debugMessages) {
 			addOutputMessage("Loading Moderators & Viewers");
 		}
+		constellationConnectable.on(LiveEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<LiveEvent>() {
+			@Override
+			public void onEvent(LiveEvent event) {
+				onLiveEvent(event);
+			}
+		});
+		if (debugMessages) {
+			addOutputMessage("Setting up ConstellationEvent");
+		}
 		try {
 			this.loadModerators();
 			this.loadViewers();
@@ -186,6 +225,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Send a message to the connected channels chat
+	 * 
 	 * @param msg
 	 */
 	public void sendMessage(String msg) {
@@ -194,6 +234,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Deletes all messages in connected channels chat for a user
+	 * 
 	 * @param user
 	 * @return
 	 */
@@ -213,6 +254,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Deletes the last message in connected channels chat for a user
+	 * 
 	 * @param user
 	 * @return
 	 */
@@ -229,6 +271,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Deletes the last message in connected channels chat for any user
+	 * 
 	 * @return
 	 */
 	protected String deleteLastMessage() {
@@ -238,6 +281,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Used to ban a user from the connected channels chat
+	 * 
 	 * @param user
 	 */
 	protected void ban(String user) {
@@ -259,6 +303,7 @@ public abstract class MJR_MixerBot {
 
 	/**
 	 * Used to unban a user from the connected channels chat
+	 * 
 	 * @param user
 	 */
 	protected void unban(String user) {
@@ -434,12 +479,12 @@ public abstract class MJR_MixerBot {
 		updateConnectedChannel();
 		return connectedChannel.channel.partnered;
 	}
-	
+
 	public Date getUpdatedAt() {
 		updateConnectedChannel();
 		return connectedChannel.channel.updatedAt;
 	}
-	
+
 	public void updateConnectedChannel() {
 		try {
 			connectedChannel = mixer.use(UsersService.class).findOne(connectedChannel.id).get(); // Used to update API info
@@ -455,4 +500,6 @@ public abstract class MJR_MixerBot {
 	protected abstract void onPart(String sender);
 
 	protected abstract void onDebugMessage();
+	
+	protected abstract void onLiveEvent(LiveEvent event);
 }
