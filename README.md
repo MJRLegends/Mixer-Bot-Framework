@@ -1,7 +1,30 @@
 # Mixer-Bot-Framework
 A Mixer Bot Framework made in Java using the Mixer API. Made for making the creation of Bot's for Mixer quicker
 
+### How to use
+```java
+public class Example extends MJR_MixerBot{
+	public Example(String clientId, String authcode, String botName) {
+		super(clientId, authcode, botName);
+	}	
 
+	public void joinChannel(String channel) {
+		try {
+			this.joinMixerChannel(channel);
+		} catch (InterruptedException | ExecutionException | IOException e) {
+			e.printStackTrace();
+		}
+	}
+}
+```
+In your main class
+```java
+	public static void main(final String[] args) {
+		Example example = new Example("CLIENT_ID", "AUTH_CODE", "BOTNAME");
+		example.joinChannel("mjrlegends");
+	}
+
+```
 #### Current Version: 1.0.2
 ### With Maven
 In your `pom.xml` add:
