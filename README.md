@@ -2,7 +2,7 @@
 A Mixer Bot Framework made in Java using the Mixer API. Made for making the creation of Bot's for Mixer quicker
 
 
-#### Current Version: 1.0.0
+#### Current Version: 1.0.2
 ### With Maven
 In your `pom.xml` add:
 ```xml
