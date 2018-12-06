@@ -35,6 +35,7 @@ import com.mixer.api.resource.constellation.ws.MixerConstellationConnectable;
 import com.mixer.api.response.users.UserSearchResponse;
 import com.mixer.api.services.impl.ChatService;
 import com.mixer.api.services.impl.UsersService;
+import com.mjr.mjrmixer.chatMethods.ChatDeleteMethod;
 
 public abstract class MJR_MixerBot {
 	private MixerUser user;
@@ -240,11 +241,11 @@ public abstract class MJR_MixerBot {
 	 * @param user
 	 * @return
 	 */
-	protected String deleteUserMessages(String user) {
+	public String deleteUserMessages(String user) {
 		int messagesDeleted = 0;
 		for (IncomingMessageEvent message : messageIDCache) {
 			if (user.equalsIgnoreCase(message.data.userName)) {
-				connectable.delete(message.data);
+				connectable.send(ChatDeleteMethod.of(message.data));
 				messagesDeleted++;
 			}
 		}
@@ -260,14 +261,14 @@ public abstract class MJR_MixerBot {
 	 * @param user
 	 * @return
 	 */
-	protected String deleteLastMessageForUser(String user) {
+	public String deleteLastMessageForUser(String user) {
 		int lastMessage = 0;
 		for (int i = 0; i < messageIDCache.size(); i++) {
 			if (user.equalsIgnoreCase(messageIDCache.get(i).data.userName)) {
 				lastMessage = i;
 			}
 		}
-		connectable.delete(messageIDCache.get(lastMessage).data);
+		connectable.send(ChatDeleteMethod.of(messageIDCache.get(lastMessage).data));
 		return "Deleted last message for " + user + "!";
 	}
 
@@ -276,8 +277,8 @@ public abstract class MJR_MixerBot {
 	 *
 	 * @return
 	 */
-	protected String deleteLastMessage() {
-		connectable.delete(messageIDCache.get(messageIDCache.size() - 1).data);
+	public String deleteLastMessage() {
+		connectable.send(ChatDeleteMethod.of(messageIDCache.get(messageIDCache.size() - 1).data));
 		return "Deleted last message!";
 	}
 
@@ -286,7 +287,7 @@ public abstract class MJR_MixerBot {
 	 *
 	 * @param user
 	 */
-	protected void ban(String user) {
+	public void ban(String user) {
 		deleteUserMessages(user);
 		String path = mixer.basePath.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
 		HashMap<String, Object> map = new HashMap<>();
@@ -308,7 +309,7 @@ public abstract class MJR_MixerBot {
 	 *
 	 * @param user
 	 */
-	protected void unban(String user) {
+	public void unban(String user) {
 		String path = mixer.basePath.resolve("channels/" + connectedChannel.channel.id + "/users/" + user.toLowerCase()).toString();
 		HashMap<String, Object> map = new HashMap<>();
 		map.put("add", new String[] { "" });
