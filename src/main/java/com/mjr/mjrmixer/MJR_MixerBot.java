@@ -15,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 
 import com.mixer.api.MixerAPI;
 import com.mixer.api.resource.MixerUser;
+import com.mixer.api.resource.MixerUser.Role;
 import com.mixer.api.resource.chat.MixerChat;
 import com.mixer.api.resource.chat.events.EventHandler;
 import com.mixer.api.resource.chat.events.IncomingMessageEvent;
@@ -157,7 +158,7 @@ public abstract class MJR_MixerBot {
 					}
 					msg += msgp.data;
 				}
-				onMessage(event.data.userName, msg);
+				onMessage(event.data.userName, event.data.userId, event.data.userRoles, msg);
 			}
 		});
 		if (debugMessages) {
@@ -496,7 +497,7 @@ public abstract class MJR_MixerBot {
 		}
 	}
 
-	protected abstract void onMessage(String sender, String message);
+	protected abstract void onMessage(String sender, int userId, List<Role> userRoles, String message);
 
 	protected abstract void onJoin(String sender);
 
