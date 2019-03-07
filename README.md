@@ -1,7 +1,7 @@
 # Mixer-Bot-Framework
 A Mixer Bot Framework made in Java using the Mixer API. Made for making the creation of Bot's for Mixer quicker
 
-### How to use
+### How to use/Example of usage
 ```java
 public class Example extends MJR_MixerBot{
 	public Example(String clientId, String authcode, String botName) {
