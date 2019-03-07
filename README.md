@@ -15,6 +15,26 @@ public class Example extends MJR_MixerBot{
 			e.printStackTrace();
 		}
 	}
+	
+		@Override
+	protected void onJoin(String sender) {
+		
+	}
+
+	@Override
+	protected void onPart(String sender) {
+		
+	}
+
+	@Override
+	protected void onDebugMessage() {
+		this.clearOutputMessages();
+	}
+
+	@Override
+	protected void onLiveEvent(LiveEvent event) {
+		
+	}
 }
 ```
 In your main class
