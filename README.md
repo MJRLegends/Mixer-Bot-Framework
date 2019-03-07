@@ -16,7 +16,7 @@ public class Example extends MJR_MixerBot{
 		}
 	}
 	
-		@Override
+	@Override
 	protected void onJoin(String sender) {
 		
 	}
