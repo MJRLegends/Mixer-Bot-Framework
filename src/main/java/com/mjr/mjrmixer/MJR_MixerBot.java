@@ -212,20 +212,58 @@ public abstract class MJR_MixerBot {
 				addOutputMessage("Authenticated to Mixer but not connected");
 		}
 	}
+	
+	/**
+	 * Used to disconnect the bot from a channel's chat & constellation
+	 */
+	public final synchronized void disconnectAll() {
+		this.disconnectChat();
+		this.disconnectConstellation();
+	}
 
 	/**
-	 * Used to disconnect the bot from a channel
+	 * Used to disconnect the bot from a channel's chat
 	 */
-	public final synchronized void disconnect() {
+	public final synchronized void disconnectChat() {
 		connectable.disconnect();
 		viewers.clear();
 		moderators.clear();
 		messageIDCache.clear();
 		if (debugMessages)
-			addOutputMessage("Disconnected from Mixer!");
+			addOutputMessage("Disconnected from Mixer Chat!");
 		this.connected = false;
 		this.authenticated = false;
 	}
+	
+	/**
+	 * Used to reconnect the bot from a channel's chat
+	 */
+	public final synchronized void reconnectChat() {
+		this.connectable.disconnect();
+		if(this.connectable.connect())
+			addOutputMessage("Reconnected to Mixer Chat!");
+		else
+			addOutputMessage("Failed to be reconnected to Mixer Chat!");
+	}
+	
+	/**
+	 * Used to disconnect the bot from a channel's constellation
+	 */
+	public final synchronized void disconnectConstellation() {
+		this.constellationConnectable.disconnect();
+	}
+	
+	/**
+	 * Used to reconnect the bot from a channel's constellation
+	 */
+	public final synchronized void reconnectConstellation() {
+		this.constellationConnectable.disconnect();
+		if(this.constellationConnectable.connect())
+			addOutputMessage("Reconnected to Mixer Constellation!");
+		else
+			addOutputMessage("Failed to be reconnected to Mixer Constellation!");
+	}
+
 
 	/**
 	 * Send a message to the connected channels chat
@@ -391,6 +429,14 @@ public abstract class MJR_MixerBot {
 			return false;
 		}
 		return (moderators != null) && moderators.contains(user.toLowerCase());
+	}
+	
+	public boolean isChatConnectionClosed() {
+		return this.connectable.isClosed();
+	}
+	
+	public boolean isConstellationConnectionClosed() {
+		return this.constellationConnectable.isClosed();
 	}
 
 	public boolean isConnected() {
