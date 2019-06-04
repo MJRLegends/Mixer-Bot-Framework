@@ -45,7 +45,7 @@ In your main class
 	}
 
 ```
-#### Current Version: 1.0.4
+#### Current Version: 1.0.5
 ### With Maven
 In your `pom.xml` add:
 ```xml
