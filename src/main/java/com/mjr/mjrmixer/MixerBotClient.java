@@ -38,7 +38,7 @@ import com.mixer.api.services.impl.ChatService;
 import com.mixer.api.services.impl.UsersService;
 import com.mjr.mjrmixer.chatMethods.ChatDeleteMethod;
 
-public abstract class MJR_MixerBot {
+public abstract class MixerBotClient {
 	private MixerUser user;
 	private MixerUser connectedChannel;
 	private MixerChat chat;
@@ -59,7 +59,7 @@ public abstract class MJR_MixerBot {
 
 	private List<String> outputMessages = new ArrayList<String>();
 
-	public MJR_MixerBot(String clientId, String authcode, String name) {
+	public MixerBotClient(String clientId, String authcode, String name) {
 		this.name = name;
 		mixer = new MixerAPI(clientId, authcode);
 		moderators = new ArrayList<String>();
