@@ -22,7 +22,6 @@ import com.mixer.api.resource.chat.events.IncomingMessageEvent;
 import com.mixer.api.resource.chat.events.UserJoinEvent;
 import com.mixer.api.resource.chat.events.UserLeaveEvent;
 import com.mixer.api.resource.chat.events.data.MessageComponent.MessageTextComponent;
-import com.mixer.api.resource.chat.events.data.MessageComponent.MessageTextComponent.Type;
 import com.mixer.api.resource.chat.methods.AuthenticateMessage;
 import com.mixer.api.resource.chat.methods.ChatSendMethod;
 import com.mixer.api.resource.chat.replies.AuthenticationReply;
@@ -153,9 +152,6 @@ public abstract class MixerBotClient {
 				messageIDCache.add(event);
 				String msg = "";
 				for (MessageTextComponent msgp : event.data.message.message) {
-					if (msgp.equals(Type.LINK)) {
-						return;
-					}
 					msg += msgp.data;
 				}
 				onMessage(event.data.userName, event.data.userId, event.data.userRoles, msg);
