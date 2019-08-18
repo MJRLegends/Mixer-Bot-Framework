@@ -36,8 +36,9 @@ import com.mixer.api.response.users.UserSearchResponse;
 import com.mixer.api.services.impl.ChatService;
 import com.mixer.api.services.impl.UsersService;
 import com.mjr.mjrmixer.chatMethods.ChatDeleteMethod;
+import com.mjr.mjrmixer.events.DisconnectEvent.DisconnectType;
 
-public abstract class MixerBotClient {
+public abstract class MixerBotBase {
 	private MixerUser user;
 	private MixerUser connectedChannel;
 	private MixerChat chat;
@@ -50,7 +51,7 @@ public abstract class MixerBotClient {
 	private List<String> viewers;
 	private List<IncomingMessageEvent> messageIDCache;
 
-	private String name;
+	private String botName;
 
 	private boolean connected = false;
 	private boolean authenticated = false;
@@ -58,8 +59,8 @@ public abstract class MixerBotClient {
 
 	private List<String> outputMessages = new ArrayList<String>();
 
-	public MixerBotClient(String clientId, String authcode, String name) {
-		this.name = name;
+	public MixerBotBase(String clientId, String authcode, String botName) {
+		this.botName = botName;
 		mixer = new MixerAPI(clientId, authcode);
 		moderators = new ArrayList<String>();
 		viewers = new ArrayList<String>();
@@ -97,8 +98,7 @@ public abstract class MixerBotClient {
 		if (search.size() > 0) {
 			connectedChannel = mixer.use(UsersService.class).findOne(search.get(0).id).get();
 		} else {
-			if (debugMessages)
-				addOutputMessage("No channel found!");
+			MixerEventHooks.triggerOnErrorEvent("No channel for the provided channel name", null);
 			return;
 		}
 
@@ -132,8 +132,7 @@ public abstract class MixerBotClient {
 
 				@Override
 				public void onFailure(Throwable err) {
-					if (debugMessages)
-						addOutputMessage(err.getMessage());
+					MixerEventHooks.triggerOnErrorEvent("Failed to Authenticate with Mixer", err);
 				}
 			});
 		}
@@ -154,7 +153,7 @@ public abstract class MixerBotClient {
 				for (MessageTextComponent msgp : event.data.message.message) {
 					msg += msgp.data;
 				}
-				onMessage(event.data.userName, event.data.userId, event.data.userRoles, msg);
+				MixerEventHooks.triggerOnMessageEvent(msg, connectedChannel.username, event.data.channel, event.data.userName, event.data.userId, event.data.userRoles);
 			}
 		});
 		if (debugMessages) {
@@ -165,7 +164,7 @@ public abstract class MixerBotClient {
 			public void onEvent(UserJoinEvent event) {
 				if (!viewers.contains(event.data.username.toLowerCase()))
 					viewers.add(event.data.username.toLowerCase());
-				onJoin(event.data.username);
+				MixerEventHooks.triggerOnJoinEvent(connectedChannel.username, connectedChannel.channel.id, event.data.username, Integer.parseInt(event.data.id));
 			}
 		});
 		if (debugMessages) {
@@ -176,7 +175,7 @@ public abstract class MixerBotClient {
 			public void onEvent(UserLeaveEvent event) {
 				if (viewers.contains(event.data.username.toLowerCase()))
 					viewers.remove(event.data.username.toLowerCase());
-				onPart(event.data.username);
+				MixerEventHooks.triggerOnPartEvent(connectedChannel.username, connectedChannel.channel.id, event.data.username, Integer.parseInt(event.data.id));
 			}
 		});
 		if (debugMessages) {
@@ -208,7 +207,7 @@ public abstract class MixerBotClient {
 				addOutputMessage("Authenticated to Mixer but not connected");
 		}
 	}
-	
+
 	/**
 	 * Used to disconnect the bot from a channel's chat & constellation
 	 */
@@ -221,6 +220,7 @@ public abstract class MixerBotClient {
 	 * Used to disconnect the bot from a channel's chat
 	 */
 	public final synchronized void disconnectChat() {
+		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, connectedChannel.username, connectedChannel.channel.id);
 		connectable.disconnect();
 		viewers.clear();
 		moderators.clear();
@@ -230,36 +230,36 @@ public abstract class MixerBotClient {
 		this.connected = false;
 		this.authenticated = false;
 	}
-	
+
 	/**
 	 * Used to reconnect the bot from a channel's chat
 	 */
 	public final synchronized void reconnectChat() {
 		this.connectable.disconnect();
-		if(this.connectable.connect())
+		if (this.connectable.connect())
 			addOutputMessage("Reconnected to Mixer Chat!");
 		else
 			addOutputMessage("Failed to be reconnected to Mixer Chat!");
 	}
-	
+
 	/**
 	 * Used to disconnect the bot from a channel's constellation
 	 */
 	public final synchronized void disconnectConstellation() {
+		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, connectedChannel.username, connectedChannel.channel.id);
 		this.constellationConnectable.disconnect();
 	}
-	
+
 	/**
 	 * Used to reconnect the bot from a channel's constellation
 	 */
 	public final synchronized void reconnectConstellation() {
 		this.constellationConnectable.disconnect();
-		if(this.constellationConnectable.connect())
+		if (this.constellationConnectable.connect())
 			addOutputMessage("Reconnected to Mixer Constellation!");
 		else
 			addOutputMessage("Failed to be reconnected to Mixer Constellation!");
 	}
-
 
 	/**
 	 * Send a message to the connected channels chat
@@ -332,7 +332,7 @@ public abstract class MixerBotClient {
 			if ((result != null) && result.toString().contains("username")) {
 			}
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			addOutputMessage(e.getMessage());
+			MixerEventHooks.triggerOnErrorEvent("Error happened when trying to ban User: " + user, e);
 			return;
 		}
 		if (debugMessages)
@@ -353,8 +353,7 @@ public abstract class MixerBotClient {
 			if ((result != null) && result.toString().contains("username")) {
 			}
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			addOutputMessage(e.getMessage());
-		}
+			MixerEventHooks.triggerOnErrorEvent("Error happened when trying to unban User: " + user, e);		}
 		if (debugMessages)
 			addOutputMessage("unban " + user);
 	}
@@ -426,11 +425,11 @@ public abstract class MixerBotClient {
 		}
 		return (moderators != null) && moderators.contains(user.toLowerCase());
 	}
-	
+
 	public boolean isChatConnectionClosed() {
 		return this.connectable.isClosed();
 	}
-	
+
 	public boolean isConstellationConnectionClosed() {
 		return this.constellationConnectable.isClosed();
 	}
@@ -444,7 +443,7 @@ public abstract class MixerBotClient {
 	}
 
 	public String getBotName() {
-		return this.name;
+		return this.botName;
 	}
 
 	public List<String> getModerators() {
@@ -539,13 +538,13 @@ public abstract class MixerBotClient {
 		}
 	}
 
-	protected abstract void onMessage(String sender, int userId, List<Role> userRoles, String message);
+	public abstract void onMessage(String sender, int senderID, List<Role> userRoles, String message);
 
-	protected abstract void onJoin(String sender);
+	public abstract void onJoin(String sender, int senderID);
 
-	protected abstract void onPart(String sender);
+	public abstract void onPart(String sender, int senderID);
 
-	protected abstract void onDebugMessage();
+	public abstract void onDebugMessage();
 
-	protected abstract void onLiveEvent(LiveEvent event);
+	public abstract void onLiveEvent(LiveEvent event);
 }
