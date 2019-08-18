@@ -55,9 +55,6 @@ public abstract class MixerBotBase {
 
 	private boolean connected = false;
 	private boolean authenticated = false;
-	private boolean debugMessages = false;
-
-	private List<String> outputMessages = new ArrayList<String>();
 
 	public MixerBotBase(String clientId, String authcode, String botName) {
 		this.botName = botName;
@@ -89,8 +86,7 @@ public abstract class MixerBotBase {
 	 * @throws IOException
 	 */
 	protected synchronized void joinMixerChannel(String channel, ArrayList<String> liveEvents) throws InterruptedException, ExecutionException, IOException {
-		if (debugMessages)
-			addOutputMessage("Connecting to channel: " + channel);
+		MixerEventHooks.triggerOnInfoEvent("Connecting to channel: " + channel);
 
 		user = mixer.use(UsersService.class).getCurrent().get();
 
@@ -115,38 +111,28 @@ public abstract class MixerBotBase {
 			live.params = test;
 			constellationConnectable.send(live);
 		}
-		if (connected) {
-			if (debugMessages) {
-				addOutputMessage("The channel id for the channel you're joining is " + connectedChannel.channel.id);
-				addOutputMessage("Trying to authenticate to Mixer");
+		MixerEventHooks.triggerOnInfoEvent("The channel id for the channel you're joining is " + connectedChannel.channel.id);
+		MixerEventHooks.triggerOnInfoEvent("Trying to authenticate to Mixer");
+		connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
+			@Override
+			public void onSuccess(AuthenticationReply reply) {
+				authenticated = true;
+				MixerEventHooks.triggerOnInfoEvent("Authenticated to Mixer");
 			}
-			connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
-				@Override
-				public void onSuccess(AuthenticationReply reply) {
-					authenticated = true;
-					if (debugMessages) {
-						addOutputMessage("Authenticated to Mixer");
-					}
 
-				}
+			@Override
+			public void onFailure(Throwable err) {
+				MixerEventHooks.triggerOnErrorEvent("Failed to Authenticate with Mixer", err);
+			}
+		});
 
-				@Override
-				public void onFailure(Throwable err) {
-					MixerEventHooks.triggerOnErrorEvent("Failed to Authenticate with Mixer", err);
-				}
-			});
-		}
-
-		if (debugMessages) {
-			addOutputMessage("Setting up IncomingMessageEvent");
-		}
+		MixerEventHooks.triggerOnInfoEvent("Setting up IncomingMessageEvent");
 		connectable.on(IncomingMessageEvent.class, new EventHandler<IncomingMessageEvent>() {
 			@Override
 			public void onEvent(IncomingMessageEvent event) {
 				if (messageIDCache.size() >= 100) {
 					messageIDCache.remove(0);
-					if (debugMessages)
-						addOutputMessage("Removed oldest message from the message cache due to limit of 100 messages in the cache has been reached");
+					MixerEventHooks.triggerOnInfoEvent("Removed oldest message from the message cache due to limit of 100 messages in the cache has been reached");
 				}
 				messageIDCache.add(event);
 				String msg = "";
@@ -156,9 +142,7 @@ public abstract class MixerBotBase {
 				MixerEventHooks.triggerOnMessageEvent(msg, connectedChannel.username, event.data.channel, event.data.userName, event.data.userId, event.data.userRoles);
 			}
 		});
-		if (debugMessages) {
-			addOutputMessage("Setting up UserJoinEvent");
-		}
+		MixerEventHooks.triggerOnInfoEvent("Setting up UserJoinEvent");
 		connectable.on(UserJoinEvent.class, new EventHandler<UserJoinEvent>() {
 			@Override
 			public void onEvent(UserJoinEvent event) {
@@ -167,9 +151,7 @@ public abstract class MixerBotBase {
 				MixerEventHooks.triggerOnJoinEvent(connectedChannel.username, connectedChannel.channel.id, event.data.username, Integer.parseInt(event.data.id));
 			}
 		});
-		if (debugMessages) {
-			addOutputMessage("Setting up UserLeaveEvent");
-		}
+		MixerEventHooks.triggerOnInfoEvent("Setting up UserLeaveEvent");
 		connectable.on(UserLeaveEvent.class, new EventHandler<UserLeaveEvent>() {
 			@Override
 			public void onEvent(UserLeaveEvent event) {
@@ -178,9 +160,7 @@ public abstract class MixerBotBase {
 				MixerEventHooks.triggerOnPartEvent(connectedChannel.username, connectedChannel.channel.id, event.data.username, Integer.parseInt(event.data.id));
 			}
 		});
-		if (debugMessages) {
-			addOutputMessage("Loading Moderators & Viewers");
-		}
+		MixerEventHooks.triggerOnInfoEvent("Loading Moderators & Viewers");
 		if (!liveEvents.isEmpty()) {
 			constellationConnectable.on(LiveEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<LiveEvent>() {
 				@Override
@@ -188,9 +168,7 @@ public abstract class MixerBotBase {
 					onLiveEvent(event);
 				}
 			});
-			if (debugMessages) {
-				addOutputMessage("Setting up ConstellationEvent");
-			}
+			MixerEventHooks.triggerOnInfoEvent("Setting up ConstellationEvent");
 		}
 		try {
 			this.loadModerators();
@@ -198,14 +176,12 @@ public abstract class MixerBotBase {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if (debugMessages) {
-			if (connected && authenticated)
-				addOutputMessage("Connected & Authenticated to Mixer");
-			else if (connected && !authenticated)
-				addOutputMessage("Connected to Mixer but not Authenticated");
-			else if (authenticated && !connected)
-				addOutputMessage("Authenticated to Mixer but not connected");
-		}
+		if (connected && authenticated)
+			MixerEventHooks.triggerOnInfoEvent("Connected & Authenticated to Mixer");
+		else if (connected && !authenticated)
+			MixerEventHooks.triggerOnInfoEvent("Connected to Mixer but not Authenticated");
+		else if (authenticated && !connected)
+			MixerEventHooks.triggerOnInfoEvent("Authenticated to Mixer but not connected");
 	}
 
 	/**
@@ -225,8 +201,7 @@ public abstract class MixerBotBase {
 		viewers.clear();
 		moderators.clear();
 		messageIDCache.clear();
-		if (debugMessages)
-			addOutputMessage("Disconnected from Mixer Chat!");
+		MixerEventHooks.triggerOnInfoEvent("Disconnected from Mixer Chat!");
 		this.connected = false;
 		this.authenticated = false;
 	}
@@ -237,9 +212,9 @@ public abstract class MixerBotBase {
 	public final synchronized void reconnectChat() {
 		this.connectable.disconnect();
 		if (this.connectable.connect())
-			addOutputMessage("Reconnected to Mixer Chat!");
+			MixerEventHooks.triggerOnInfoEvent("Reconnected to Mixer Chat!");
 		else
-			addOutputMessage("Failed to be reconnected to Mixer Chat!");
+			MixerEventHooks.triggerOnInfoEvent("Failed to be reconnected to Mixer Chat!");
 	}
 
 	/**
@@ -256,9 +231,9 @@ public abstract class MixerBotBase {
 	public final synchronized void reconnectConstellation() {
 		this.constellationConnectable.disconnect();
 		if (this.constellationConnectable.connect())
-			addOutputMessage("Reconnected to Mixer Constellation!");
+			MixerEventHooks.triggerOnInfoEvent("Reconnected to Mixer Constellation!");
 		else
-			addOutputMessage("Failed to be reconnected to Mixer Constellation!");
+			MixerEventHooks.triggerOnInfoEvent("Failed to be reconnected to Mixer Constellation!");
 	}
 
 	/**
@@ -335,8 +310,7 @@ public abstract class MixerBotBase {
 			MixerEventHooks.triggerOnErrorEvent("Error happened when trying to ban User: " + user, e);
 			return;
 		}
-		if (debugMessages)
-			addOutputMessage("Banned " + user);
+		MixerEventHooks.triggerOnInfoEvent("Banned " + user);
 	}
 
 	/**
@@ -353,9 +327,9 @@ public abstract class MixerBotBase {
 			if ((result != null) && result.toString().contains("username")) {
 			}
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			MixerEventHooks.triggerOnErrorEvent("Error happened when trying to unban User: " + user, e);		}
-		if (debugMessages)
-			addOutputMessage("unban " + user);
+			MixerEventHooks.triggerOnErrorEvent("Error happened when trying to unban User: " + user, e);
+		}
+		MixerEventHooks.triggerOnInfoEvent("unban " + user);
 	}
 
 	private void loadModerators() throws IOException {
@@ -386,9 +360,7 @@ public abstract class MixerBotBase {
 			} else
 				done = true;
 		}
-		if (debugMessages) {
-			addOutputMessage("Found " + moderators.size() + " moderators!");
-		}
+		MixerEventHooks.triggerOnInfoEvent("Found " + moderators.size() + " moderators!");
 	}
 
 	private void loadViewers() throws IOException {
@@ -414,9 +386,7 @@ public abstract class MixerBotBase {
 			} else
 				done = true;
 		}
-		if (debugMessages) {
-			addOutputMessage("Found " + viewers.size() + " viewers!");
-		}
+		MixerEventHooks.triggerOnInfoEvent("Found " + viewers.size() + " viewers!");
 	}
 
 	public boolean isUserMod(String user) {
@@ -452,32 +422,6 @@ public abstract class MixerBotBase {
 
 	public List<String> getViewers() {
 		return viewers;
-	}
-
-	protected void setdebug(boolean value) {
-		debugMessages = value;
-	}
-
-	public List<String> getOutputMessages() {
-		return outputMessages;
-	}
-
-	public void setOutputMessages(List<String> outputMessages) {
-		this.outputMessages = outputMessages;
-		this.onDebugMessage();
-	}
-
-	public void addOutputMessage(String outputMessage) {
-		this.outputMessages.add(outputMessage);
-		this.onDebugMessage();
-	}
-
-	public void removeOutputMessage(String outputMessage) {
-		this.outputMessages.remove(outputMessage);
-	}
-
-	public void clearOutputMessages() {
-		this.outputMessages.clear();
 	}
 
 	protected void addViewer(String viewer) {
@@ -543,8 +487,6 @@ public abstract class MixerBotBase {
 	public abstract void onJoin(String sender, int senderID);
 
 	public abstract void onPart(String sender, int senderID);
-
-	public abstract void onDebugMessage();
 
 	public abstract void onLiveEvent(LiveEvent event);
 }

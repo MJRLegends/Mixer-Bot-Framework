@@ -17,10 +17,10 @@ public class Event {
 		}
 	}
 
-	public EventType typeIRC;
+	public EventType type;
 
 	public Event(EventType type) {
 		super();
-		this.typeIRC = type;
+		this.type = type;
 	}
 }
