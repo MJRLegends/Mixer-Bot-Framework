@@ -174,7 +174,7 @@ public abstract class MixerBotBase {
 			this.loadModerators();
 			this.loadViewers();
 		} catch (IOException e) {
-			e.printStackTrace();
+			MixerEventHooks.triggerOnErrorEvent("Error happened when trying to load moderators/viewers", e);
 		}
 		if (connected && authenticated)
 			MixerEventHooks.triggerOnInfoEvent("Connected & Authenticated to Mixer");
@@ -478,7 +478,7 @@ public abstract class MixerBotBase {
 		try {
 			connectedChannel = mixer.use(UsersService.class).findOne(connectedChannel.id).get(); // Used to update API info
 		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
+			MixerEventHooks.triggerOnErrorEvent("Error happened when trying to update ConnectedChannel", e);
 		}
 	}
 
