@@ -56,6 +56,9 @@ public abstract class MixerBotBase {
 	private boolean connected = false;
 	private boolean authenticated = false;
 
+	private int channelID;
+	private String channelName;
+
 	public MixerBotBase(String clientId, String authcode, String botName) {
 		this.botName = botName;
 		mixer = new MixerAPI(clientId, authcode);
@@ -97,7 +100,8 @@ public abstract class MixerBotBase {
 			MixerEventHooks.triggerOnErrorEvent("No channel for the provided channel name", null);
 			return;
 		}
-
+		this.setChannelID(connectedChannel.id);
+		this.setChannelName(channel);
 		chat = mixer.use(ChatService.class).findOne(connectedChannel.channel.id).get();
 		connectable = chat.connectable(mixer);
 		connected = connectable.connect();
@@ -480,6 +484,22 @@ public abstract class MixerBotBase {
 		} catch (InterruptedException | ExecutionException e) {
 			MixerEventHooks.triggerOnErrorEvent("Error happened when trying to update ConnectedChannel", e);
 		}
+	}
+
+	public int getChannelID() {
+		return this.channelID;
+	}
+
+	public void setChannelID(int channelID) {
+		this.channelID = channelID;
+	}
+
+	public String getChannelName() {
+		return this.channelName;
+	}
+
+	public void setChannelName(String channelName) {
+		this.channelName = channelName;
 	}
 
 	public abstract void onMessage(String sender, int senderID, List<Role> userRoles, String message);
