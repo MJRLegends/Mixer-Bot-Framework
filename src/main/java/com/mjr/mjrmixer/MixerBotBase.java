@@ -32,7 +32,6 @@ import com.mixer.api.resource.constellation.events.LiveEvent;
 import com.mixer.api.resource.constellation.methods.LiveSubscribeMethod;
 import com.mixer.api.resource.constellation.methods.data.LiveRequestData;
 import com.mixer.api.resource.constellation.ws.MixerConstellationConnectable;
-import com.mixer.api.response.users.UserSearchResponse;
 import com.mixer.api.services.impl.ChatService;
 import com.mixer.api.services.impl.UsersService;
 import com.mjr.mjrmixer.chatMethods.ChatDeleteMethod;
@@ -69,39 +68,43 @@ public abstract class MixerBotBase {
 
 	/**
 	 * Used to connect the bot to Mixer & join a channel
+	 * 
+	 * @param events
+	 * @param channelID
 	 *
-	 * @param channel
+	 * @param channelID
 	 * @throws InterruptedException
 	 * @throws ExecutionException
 	 * @throws IOException
+	 * @return channelName
 	 */
-	protected synchronized void joinMixerChannel(String channel) throws InterruptedException, ExecutionException, IOException {
-		joinMixerChannel(channel, new ArrayList<String>());
+	protected synchronized void joinMixerChannel(int userID) throws InterruptedException, ExecutionException, IOException {
+		joinMixerChannel(userID, new ArrayList<String>());
 	}
 
 	/**
 	 * Used to connect the bot to Mixer & join a channel
 	 *
-	 * @param channel
+	 * @param channelID
 	 * @param liveEvents
 	 * @throws InterruptedException
 	 * @throws ExecutionException
 	 * @throws IOException
+	 * @return channelName
 	 */
-	protected synchronized void joinMixerChannel(String channel, ArrayList<String> liveEvents) throws InterruptedException, ExecutionException, IOException {
-		MixerEventHooks.triggerOnInfoEvent("Connecting to channel: " + channel);
+	protected synchronized void joinMixerChannel(int userID, ArrayList<String> liveEvents) throws InterruptedException, ExecutionException, IOException {
+		MixerEventHooks.triggerOnInfoEvent("Connecting to channel: " + userID);
 
 		user = mixer.use(UsersService.class).getCurrent().get();
 
-		UserSearchResponse search = mixer.use(UsersService.class).search(channel.toLowerCase()).get();
-		if (search.size() > 0) {
-			connectedChannel = mixer.use(UsersService.class).findOne(search.get(0).id).get();
+		if (userID != -1) {
+			connectedChannel = mixer.use(UsersService.class).findOne(userID).get();
 		} else {
-			MixerEventHooks.triggerOnErrorEvent("No channel for the provided channel name", null);
+			MixerEventHooks.triggerOnErrorEvent("No channel for the provided channel id", null);
 			return;
 		}
-		this.setChannelID(connectedChannel.id);
-		this.setChannelName(channel);
+		this.setChannelID(connectedChannel.channel.id);
+		this.setChannelName(connectedChannel.username);
 		chat = mixer.use(ChatService.class).findOne(connectedChannel.channel.id).get();
 		connectable = chat.connectable(mixer);
 		connected = connectable.connect();
