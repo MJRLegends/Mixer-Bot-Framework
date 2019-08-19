@@ -72,7 +72,7 @@ public abstract class MixerBotBase {
 	 * @param events
 	 * @param channelID
 	 *
-	 * @param channelID
+	 * @param userID (DONT USE channelID)
 	 * @throws InterruptedException
 	 * @throws ExecutionException
 	 * @throws IOException
@@ -85,7 +85,7 @@ public abstract class MixerBotBase {
 	/**
 	 * Used to connect the bot to Mixer & join a channel
 	 *
-	 * @param channelID
+	 * @param userID (DONT USE channelID)
 	 * @param liveEvents
 	 * @throws InterruptedException
 	 * @throws ExecutionException
