@@ -16,7 +16,7 @@ public class MixerEventHooks {
 	public static void triggerOnMessageEvent(final String message, final String channel, final int channelID, final String sender, final int senderID, final List<Role> senderRoles) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.MESSAGE.getName().equalsIgnoreCase(event.type.getName()))
-				((MessageEvent) event).onEvent(new MessageEvent(sender, channel, channelID, message, senderID, senderRoles));
+				((MessageEvent) event).onEvent(new MessageEvent(message, channel, channelID, sender, senderID, senderRoles));
 		}
 	}
 
