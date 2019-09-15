@@ -36,6 +36,7 @@ import com.mixer.api.services.impl.ChatService;
 import com.mixer.api.services.impl.UsersService;
 import com.mjr.mjrmixer.chatMethods.ChatDeleteMethod;
 import com.mjr.mjrmixer.events.DisconnectEvent.DisconnectType;
+import com.mjr.mjrmixer.events.ReconnectEvent.ReconnectType;
 
 public abstract class MixerBotBase {
 	private MixerUser user;
@@ -203,7 +204,7 @@ public abstract class MixerBotBase {
 	 * Used to disconnect the bot from a channel's chat
 	 */
 	public final synchronized void disconnectChat() {
-		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, connectedChannel.username, connectedChannel.channel.id);
+		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, this.channelName, this.channelID);
 		connectable.disconnect();
 		viewers.clear();
 		moderators.clear();
@@ -217,6 +218,7 @@ public abstract class MixerBotBase {
 	 * Used to reconnect the bot from a channel's chat
 	 */
 	public final synchronized void reconnectChat() {
+		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CHAT, this.channelName, this.channelID);
 		this.connectable.disconnect();
 		if (this.connectable.connect())
 			MixerEventHooks.triggerOnInfoEvent("Reconnected to Mixer Chat!");
@@ -228,7 +230,7 @@ public abstract class MixerBotBase {
 	 * Used to disconnect the bot from a channel's constellation
 	 */
 	public final synchronized void disconnectConstellation() {
-		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, connectedChannel.username, connectedChannel.channel.id);
+		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, this.channelName, this.channelID);
 		this.constellationConnectable.disconnect();
 	}
 
@@ -236,6 +238,7 @@ public abstract class MixerBotBase {
 	 * Used to reconnect the bot from a channel's constellation
 	 */
 	public final synchronized void reconnectConstellation() {
+		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CONSTELLATION, this.channelName, this.channelID);
 		this.constellationConnectable.disconnect();
 		if (this.constellationConnectable.connect())
 			MixerEventHooks.triggerOnInfoEvent("Reconnected to Mixer Constellation!");

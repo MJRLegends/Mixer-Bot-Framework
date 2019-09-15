@@ -11,6 +11,8 @@ import com.mjr.mjrmixer.events.InfoEvent;
 import com.mjr.mjrmixer.events.JoinEvent;
 import com.mjr.mjrmixer.events.MessageEvent;
 import com.mjr.mjrmixer.events.PartEvent;
+import com.mjr.mjrmixer.events.ReconnectEvent;
+import com.mjr.mjrmixer.events.ReconnectEvent.ReconnectType;
 
 public class MixerEventHooks {
 	public static void triggerOnMessageEvent(final String message, final String channel, final int channelID, final String sender, final int senderID, final List<Role> senderRoles) {
@@ -38,6 +40,13 @@ public class MixerEventHooks {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.DISCONNECT.getName().equalsIgnoreCase(event.type.getName()))
 				((DisconnectEvent) event).onEvent(new DisconnectEvent(type, channel, channelID));
+		}
+	}
+
+	public static void triggerOnReconnectEvent(final ReconnectType type, final String channel, final int channelID) {
+		for (Event event : MixerManager.getEventListeners()) {
+			if (EventType.RECONNECT.getName().equalsIgnoreCase(event.type.getName()))
+				((ReconnectEvent) event).onEvent(new ReconnectEvent(type, channel, channelID));
 		}
 	}
 

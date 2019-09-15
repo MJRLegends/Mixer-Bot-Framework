@@ -3,7 +3,7 @@ package com.mjr.mjrmixer;
 public class Event {
 
 	public enum EventType {
-		MESSAGE("Message"), JOIN("Join"), PART("Part"), CONNECT("Connect"), DISCONNECT("Disconnect"), ERRORMSG("ErrorMessage"), INFOMSG(
+		MESSAGE("Message"), JOIN("Join"), PART("Part"), CONNECT("Connect"), DISCONNECT("Disconnect"), RECONNECT("Reconnect"), ERRORMSG("ErrorMessage"), INFOMSG(
 				"InfoMessage");
 
 		public final String name;
