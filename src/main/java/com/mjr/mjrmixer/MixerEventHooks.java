@@ -3,6 +3,8 @@ package com.mjr.mjrmixer;
 import java.util.List;
 
 import com.mixer.api.resource.MixerUser.Role;
+import com.mixer.api.resource.chat.events.data.ChatDisconnectData;
+import com.mixer.api.resource.constellation.events.data.ConstellationDisconnectData;
 import com.mjr.mjrmixer.Event.EventType;
 import com.mjr.mjrmixer.events.DisconnectEvent;
 import com.mjr.mjrmixer.events.DisconnectEvent.DisconnectType;
@@ -36,10 +38,17 @@ public class MixerEventHooks {
 		}
 	}
 
-	public static void triggerOnDisconnectEvent(final DisconnectType type, final String channel, final int channelID) {
+	public static void triggerOnDisconnectEvent(final DisconnectType type, final String channel, final int channelID, ChatDisconnectData data) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.DISCONNECT.getName().equalsIgnoreCase(event.type.getName()))
-				((DisconnectEvent) event).onEvent(new DisconnectEvent(type, channel, channelID));
+				((DisconnectEvent) event).onEvent(new DisconnectEvent(type, channel, channelID, data));
+		}
+	}
+
+	public static void triggerOnDisconnectEvent(final DisconnectType type, final String channel, final int channelID, ConstellationDisconnectData data) {
+		for (Event event : MixerManager.getEventListeners()) {
+			if (EventType.DISCONNECT.getName().equalsIgnoreCase(event.type.getName()))
+				((DisconnectEvent) event).onEvent(new DisconnectEvent(type, channel, channelID, data));
 		}
 	}
 
