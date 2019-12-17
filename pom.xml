@@ -7,10 +7,11 @@
     <artifactId>Mixer-Bot-Framework</artifactId>
     <version>1.0.8</version>
 	<repositories>
-  <repository>
-    <id>beam-snapshots</id>
-    <url>https://maven.mixer.com/content/repositories/snapshots/</url>
-  </repository>
+		<repository>
+			<id>maven.mjrlegends.com</id>
+			<name>MJRLegends</name>
+			<url>https://maven.mjrlegends.com</url>
+		</repository>
 	</repositories>
        
     <dependencies>
