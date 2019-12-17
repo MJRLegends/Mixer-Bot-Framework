@@ -17,10 +17,12 @@ import com.mixer.api.MixerAPI;
 import com.mixer.api.resource.MixerUser;
 import com.mixer.api.resource.MixerUser.Role;
 import com.mixer.api.resource.chat.MixerChat;
+import com.mixer.api.resource.chat.events.ChatDisconnectEvent;
 import com.mixer.api.resource.chat.events.EventHandler;
 import com.mixer.api.resource.chat.events.IncomingMessageEvent;
 import com.mixer.api.resource.chat.events.UserJoinEvent;
 import com.mixer.api.resource.chat.events.UserLeaveEvent;
+import com.mixer.api.resource.chat.events.WelcomeEvent;
 import com.mixer.api.resource.chat.events.data.MessageComponent.MessageTextComponent;
 import com.mixer.api.resource.chat.methods.AuthenticateMessage;
 import com.mixer.api.resource.chat.methods.ChatSendMethod;
@@ -28,7 +30,10 @@ import com.mixer.api.resource.chat.replies.AuthenticationReply;
 import com.mixer.api.resource.chat.replies.ReplyHandler;
 import com.mixer.api.resource.chat.ws.MixerChatConnectable;
 import com.mixer.api.resource.constellation.MixerConstellation;
+import com.mixer.api.resource.constellation.events.ConstellationDisconnectEvent;
+import com.mixer.api.resource.constellation.events.HelloEvent;
 import com.mixer.api.resource.constellation.events.LiveEvent;
+import com.mixer.api.resource.constellation.events.data.ConstellationDisconnectData;
 import com.mixer.api.resource.constellation.methods.LiveSubscribeMethod;
 import com.mixer.api.resource.constellation.methods.data.LiveRequestData;
 import com.mixer.api.resource.constellation.ws.MixerConstellationConnectable;
@@ -50,6 +55,7 @@ public abstract class MixerBotBase {
 	private List<String> moderators;
 	private List<String> viewers;
 	private List<IncomingMessageEvent> messageIDCache;
+	private List<String> liveEvents;
 
 	private String botName;
 
@@ -65,6 +71,31 @@ public abstract class MixerBotBase {
 		moderators = new ArrayList<String>();
 		viewers = new ArrayList<String>();
 		messageIDCache = new ArrayList<IncomingMessageEvent>();
+	}
+
+	private void authWithMixer() {
+		connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
+			@Override
+			public void onSuccess(AuthenticationReply reply) {
+				authenticated = true;
+				MixerEventHooks.triggerOnInfoEvent("Authenticated to Mixer");
+			}
+
+			@Override
+			public void onFailure(Throwable err) {
+				MixerEventHooks.triggerOnErrorEvent("Failed to Authenticate with Mixer", err);
+			}
+		});
+	}
+
+	private void requestEventsConstellation() {
+		MixerEventHooks.triggerOnInfoEvent("ConstellationEvent Requesting events");
+		LiveRequestData test = new LiveRequestData();
+		test.events = this.liveEvents;
+		LiveSubscribeMethod live = new LiveSubscribeMethod();
+		live.params = test;
+		constellationConnectable.send(live);
+		MixerEventHooks.triggerOnInfoEvent("ConstellationEvent Requested events");
 	}
 
 	/**
@@ -94,10 +125,11 @@ public abstract class MixerBotBase {
 	 * @return channelName
 	 */
 	protected void joinMixerChannel(int userID, final ArrayList<String> eventsInput) throws InterruptedException, ExecutionException, IOException {
-		MixerEventHooks.triggerOnInfoEvent("Connecting to channel: " + userID);
+		this.liveEvents = eventsInput;
+		do {
+		} while (mixer == null);
 
 		user = mixer.use(UsersService.class).getCurrent().get();
-
 		if (userID != -1) {
 			connectedChannel = mixer.use(UsersService.class).findOne(userID).get();
 		} else {
@@ -107,34 +139,43 @@ public abstract class MixerBotBase {
 		this.setChannelID(connectedChannel.channel.id);
 		this.setChannelName(connectedChannel.username);
 		chat = mixer.use(ChatService.class).findOne(connectedChannel.channel.id).get();
-		connectable = chat.connectable(mixer);
+		connectable = chat.connectable(this.mixer);
 		connected = connectable.connect();
+		connectable.on(WelcomeEvent.class, new EventHandler<WelcomeEvent>() {
+			@Override
+			public void onEvent(WelcomeEvent event) {
+				MixerEventHooks.triggerOnInfoEvent("Connected Server " + event.data.server);
+				MixerEventHooks.triggerOnInfoEvent("Trying to authenticate to Mixer for channel " + getChannelID());
+				authWithMixer();
+			}
+		});
 		if (!liveEvents.isEmpty()) {
+			MixerEventHooks.triggerOnInfoEvent("Starting Setting up of Constellation Events: HelloEvent, LiveEvent, ConstellationDisconnectEvent");
 			constellation = new MixerConstellation();
 			constellationConnectable = constellation.connectable(mixer);
 			constellationConnectable.connect();
-			LiveRequestData test = new LiveRequestData();
-			test.events = liveEvents;
-			LiveSubscribeMethod live = new LiveSubscribeMethod();
-			live.params = test;
-			constellationConnectable.send(live);
+			constellationConnectable.on(HelloEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<HelloEvent>() {
+				@Override
+				public void onEvent(HelloEvent event) {
+					requestEventsConstellation();
+				}
+			});
+			constellationConnectable.on(LiveEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<LiveEvent>() {
+				@Override
+				public void onEvent(LiveEvent event) {
+					onLiveEvent(event);
+				}
+			});
+			constellationConnectable.on(ConstellationDisconnectEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<ConstellationDisconnectEvent>() {
+				@Override
+				public void onEvent(ConstellationDisconnectEvent event) {
+					MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, getChannelName(), getChannelID(), event.data);
+				}
+			});
+			MixerEventHooks.triggerOnInfoEvent("Finished Setting up of Constellation Events: HelloEvent, LiveEvent, ConstellationDisconnectEvent");
 		}
 		MixerEventHooks.triggerOnInfoEvent("The channel id for the channel you're joining is " + connectedChannel.channel.id);
-		MixerEventHooks.triggerOnInfoEvent("Trying to authenticate to Mixer");
-		connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
-			@Override
-			public void onSuccess(AuthenticationReply reply) {
-				authenticated = true;
-				MixerEventHooks.triggerOnInfoEvent("Authenticated to Mixer");
-			}
-
-			@Override
-			public void onFailure(Throwable err) {
-				MixerEventHooks.triggerOnErrorEvent("Failed to Authenticate with Mixer", err);
-			}
-		});
-
-		MixerEventHooks.triggerOnInfoEvent("Setting up IncomingMessageEvent");
+		MixerEventHooks.triggerOnInfoEvent("Starting Setting up of Chat Events: IncomingMessageEvent, UserJoinEvent, UserLeaveEvent, ChatDisconnectEvent");
 		connectable.on(IncomingMessageEvent.class, new EventHandler<IncomingMessageEvent>() {
 			@Override
 			public void onEvent(IncomingMessageEvent event) {
@@ -150,7 +191,6 @@ public abstract class MixerBotBase {
 				MixerEventHooks.triggerOnMessageEvent(msg, connectedChannel.username, event.data.channel, event.data.userName, event.data.userId, event.data.userRoles);
 			}
 		});
-		MixerEventHooks.triggerOnInfoEvent("Setting up UserJoinEvent");
 		connectable.on(UserJoinEvent.class, new EventHandler<UserJoinEvent>() {
 			@Override
 			public void onEvent(UserJoinEvent event) {
@@ -159,7 +199,6 @@ public abstract class MixerBotBase {
 				MixerEventHooks.triggerOnJoinEvent(connectedChannel.username, connectedChannel.channel.id, event.data.username, Integer.parseInt(event.data.id));
 			}
 		});
-		MixerEventHooks.triggerOnInfoEvent("Setting up UserLeaveEvent");
 		connectable.on(UserLeaveEvent.class, new EventHandler<UserLeaveEvent>() {
 			@Override
 			public void onEvent(UserLeaveEvent event) {
@@ -168,16 +207,15 @@ public abstract class MixerBotBase {
 				MixerEventHooks.triggerOnPartEvent(connectedChannel.username, connectedChannel.channel.id, event.data.username, Integer.parseInt(event.data.id));
 			}
 		});
+		connectable.on(ChatDisconnectEvent.class, new EventHandler<ChatDisconnectEvent>() {
+			@Override
+			public void onEvent(ChatDisconnectEvent event) {
+				MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, getChannelName(), getChannelID(), event.data);
+			}
+		});
+		MixerEventHooks.triggerOnInfoEvent("Finished Setting up of Chat Events: IncomingMessageEvent, UserJoinEvent, UserLeaveEvent, ChatDisconnectEvent");
+
 		MixerEventHooks.triggerOnInfoEvent("Loading Moderators & Viewers");
-		if (!liveEvents.isEmpty()) {
-			constellationConnectable.on(LiveEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<LiveEvent>() {
-				@Override
-				public void onEvent(LiveEvent event) {
-					onLiveEvent(event);
-				}
-			});
-			MixerEventHooks.triggerOnInfoEvent("Setting up ConstellationEvent");
-		}
 		try {
 			this.loadModerators();
 			this.loadViewers();
