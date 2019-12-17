@@ -91,7 +91,7 @@ public abstract class MixerBotBase {
 	private void requestEventsConstellation() {
 		MixerEventHooks.triggerOnInfoEvent("ConstellationEvent Requesting events");
 		LiveRequestData test = new LiveRequestData();
-		test.events = this.liveEvents;
+		test.events = (ArrayList<String>) this.liveEvents;
 		LiveSubscribeMethod live = new LiveSubscribeMethod();
 		live.params = test;
 		constellationConnectable.send(live);
