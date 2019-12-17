@@ -79,7 +79,7 @@ public abstract class MixerBotBase {
 	 * @throws IOException
 	 * @return channelName
 	 */
-	protected synchronized void joinMixerChannel(int userID) throws InterruptedException, ExecutionException, IOException {
+	protected void joinMixerChannel(int userID) throws InterruptedException, ExecutionException, IOException {
 		joinMixerChannel(userID, new ArrayList<String>());
 	}
 
@@ -93,7 +93,7 @@ public abstract class MixerBotBase {
 	 * @throws IOException
 	 * @return channelName
 	 */
-	protected synchronized void joinMixerChannel(int userID, ArrayList<String> liveEvents) throws InterruptedException, ExecutionException, IOException {
+	protected void joinMixerChannel(int userID, final ArrayList<String> eventsInput) throws InterruptedException, ExecutionException, IOException {
 		MixerEventHooks.triggerOnInfoEvent("Connecting to channel: " + userID);
 
 		user = mixer.use(UsersService.class).getCurrent().get();
@@ -195,7 +195,7 @@ public abstract class MixerBotBase {
 	/**
 	 * Used to disconnect the bot from a channel's chat & constellation
 	 */
-	public final synchronized void disconnectAll() {
+	public final void disconnectAll() {
 		this.disconnectChat();
 		this.disconnectConstellation();
 	}
@@ -203,8 +203,8 @@ public abstract class MixerBotBase {
 	/**
 	 * Used to disconnect the bot from a channel's chat
 	 */
-	public final synchronized void disconnectChat() {
-		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, this.channelName, this.channelID);
+	public final void disconnectChat() {
+		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, this.channelName, this.channelID, new ConstellationDisconnectData(1000, "Requested Disconnect By Bot", false));
 		connectable.disconnect();
 		viewers.clear();
 		moderators.clear();
@@ -217,7 +217,7 @@ public abstract class MixerBotBase {
 	/**
 	 * Used to reconnect the bot from a channel's chat
 	 */
-	public final synchronized void reconnectChat() {
+	public final void reconnectChat() {
 		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CHAT, this.channelName, this.channelID);
 		this.connectable.disconnect();
 		if (this.connectable.connect())
@@ -229,15 +229,15 @@ public abstract class MixerBotBase {
 	/**
 	 * Used to disconnect the bot from a channel's constellation
 	 */
-	public final synchronized void disconnectConstellation() {
-		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, this.channelName, this.channelID);
+	public final void disconnectConstellation() {
+		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, this.channelName, this.channelID, new ConstellationDisconnectData(1000, "Requested Disconnect By Bot", false));
 		this.constellationConnectable.disconnect();
 	}
 
 	/**
 	 * Used to reconnect the bot from a channel's constellation
 	 */
-	public final synchronized void reconnectConstellation() {
+	public final void reconnectConstellation() {
 		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CONSTELLATION, this.channelName, this.channelID);
 		this.constellationConnectable.disconnect();
 		if (this.constellationConnectable.connect())
