@@ -31,8 +31,9 @@
   </build>
   <repositories>
     <repository>
-      <id>beam-snapshots</id>
-      <url>https://maven.mixer.com/content/repositories/snapshots/</url>
+      <id>maven.mjrlegends.com</id>
+      <name>MJRLegends</name>
+      <url>https://maven.mjrlegends.com</url>
     </repository>
   </repositories>
 </project>

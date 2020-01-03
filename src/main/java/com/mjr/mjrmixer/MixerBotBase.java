@@ -128,6 +128,7 @@ public abstract class MixerBotBase {
 		this.liveEvents = eventsInput;
 		do {
 		} while (mixer == null);
+		MixerReconnectManager.initMixerReconnectThreadIfDoesntExist();
 
 		user = mixer.use(UsersService.class).getCurrent().get();
 		if (userID != -1) {
