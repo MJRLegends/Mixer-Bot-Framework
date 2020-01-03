@@ -1,6 +1,7 @@
 package com.mjr.mjrmixer;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class MixerReconnectThread extends Thread {
@@ -18,7 +19,10 @@ public class MixerReconnectThread extends Thread {
 		while (true) {
 			try {
 				if (mixerBots.size() != 0) {
-					for (MixerBotBase bot : mixerBots) {
+
+					Iterator<MixerBotBase> iterator = mixerBots.iterator();
+					while (iterator.hasNext()) {
+						MixerBotBase bot = iterator.next();
 						boolean done = false;
 						if (bot.isChatConnectionClosed()) {
 							bot.reconnectChat();
@@ -29,7 +33,7 @@ public class MixerReconnectThread extends Thread {
 							done = true;
 						}
 						if (done)
-							mixerBots.remove(bot);
+							iterator.remove();
 						if (mixerBots.size() != 0)
 							Thread.sleep(mixerBotSleepTime * 1000);
 					}
