@@ -1,7 +1,7 @@
 # Mixer-Bot-Framework
 A Mixer Bot Framework made in Java using the Mixer API. Made for making the creation of Bot's for Mixer quicker
 
-#### Current Version: 1.0.8
+#### Current Version: 1.0.9
 ### With Maven
 In your `pom.xml` add:
 ```xml
