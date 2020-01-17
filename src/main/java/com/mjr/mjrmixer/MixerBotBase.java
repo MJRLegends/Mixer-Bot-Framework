@@ -63,6 +63,7 @@ public abstract class MixerBotBase {
 	private boolean authenticated = false;
 
 	private int channelID;
+	private int userID;
 	private String channelName;
 
 	public MixerBotBase(String clientId, String authcode, String botName) {
@@ -137,6 +138,7 @@ public abstract class MixerBotBase {
 			MixerEventHooks.triggerOnErrorEvent("No channel for the provided channel id", null);
 			return;
 		}
+		this.setUserID(userID);
 		this.setChannelID(connectedChannel.channel.id);
 		this.setChannelName(connectedChannel.username);
 		chat = mixer.use(ChatService.class).findOne(connectedChannel.channel.id).get();
@@ -537,6 +539,14 @@ public abstract class MixerBotBase {
 
 	public void setChannelID(int channelID) {
 		this.channelID = channelID;
+	}
+
+	public int getUserID() {
+		return userID;
+	}
+
+	public void setUserID(int userID) {
+		this.userID = userID;
 	}
 
 	public String getChannelName() {
