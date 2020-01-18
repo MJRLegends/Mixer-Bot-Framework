@@ -260,7 +260,6 @@ public abstract class MixerBotBase {
 	 */
 	public final void reconnectChat() {
 		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CHAT, this.channelName, this.channelID);
-		this.connectable.disconnect();
 		if (this.connectable.connect())
 			MixerEventHooks.triggerOnInfoEvent("Reconnected to Mixer Chat!");
 		else
@@ -280,7 +279,6 @@ public abstract class MixerBotBase {
 	 */
 	public final void reconnectConstellation() {
 		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CONSTELLATION, this.channelName, this.channelID);
-		this.constellationConnectable.disconnect();
 		if (this.constellationConnectable.connect())
 			MixerEventHooks.triggerOnInfoEvent("Reconnected to Mixer Constellation!");
 		else
