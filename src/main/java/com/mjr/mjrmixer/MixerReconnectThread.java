@@ -5,7 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class MixerReconnectThread extends Thread {
-	private List<MixerBotBase> mixerBots = new ArrayList<MixerBotBase>();
+	private List<MixerBotBase> mixerBotsChat = new ArrayList<MixerBotBase>();
+	private List<MixerBotBase> mixerBotsConstell = new ArrayList<MixerBotBase>();
 
 	private int mixerBotSleepTime;
 
@@ -18,9 +19,8 @@ public class MixerReconnectThread extends Thread {
 	public void run() {
 		while (true) {
 			try {
-				if (mixerBots.size() != 0) {
-
-					Iterator<MixerBotBase> iterator = mixerBots.iterator();
+				if (mixerBotsChat.size() != 0) {
+					Iterator<MixerBotBase> iterator = mixerBotsChat.iterator();
 					while (iterator.hasNext()) {
 						MixerBotBase bot = iterator.next();
 						boolean done = false;
@@ -28,13 +28,24 @@ public class MixerReconnectThread extends Thread {
 							bot.reconnectChat();
 							done = true;
 						}
+						if (done)
+							iterator.remove();
+						if (mixerBotsChat.size() != 0)
+							Thread.sleep(mixerBotSleepTime * 1000);
+					}
+				}
+				if (mixerBotsConstell.size() != 0) {
+					Iterator<MixerBotBase> iterator = mixerBotsConstell.iterator();
+					while (iterator.hasNext()) {
+						MixerBotBase bot = iterator.next();
+						boolean done = false;
 						if (bot.isConstellationConnectionClosed()) {
-							bot.reconnectChat();
+							bot.reconnectConstellation();
 							done = true;
 						}
 						if (done)
 							iterator.remove();
-						if (mixerBots.size() != 0)
+						if (mixerBotsConstell.size() != 0)
 							Thread.sleep(mixerBotSleepTime * 1000);
 					}
 				}
@@ -52,12 +63,22 @@ public class MixerReconnectThread extends Thread {
 
 	}
 
-	public List<MixerBotBase> getMixerBotBases() {
-		return mixerBots;
+	public List<MixerBotBase> getMixerBotChatBases() {
+		return mixerBotsChat;
 	}
 
-	public void addMixerBotBase(MixerBotBase bot) {
-		this.mixerBots.add(bot);
+	public List<MixerBotBase> getMixerBotConstellationBases() {
+		return mixerBotsConstell;
+	}
+
+	public void addMixerBotChatBase(MixerBotBase bot) {
+		if (!mixerBotsChat.contains(bot))
+			this.mixerBotsChat.add(bot);
+	}
+
+	public void addMixerBotChatConstellation(MixerBotBase bot) {
+		if (!mixerBotsConstell.contains(bot))
+			this.mixerBotsConstell.add(bot);
 	}
 
 	public int getMixerBotBaseSleepTime() {
