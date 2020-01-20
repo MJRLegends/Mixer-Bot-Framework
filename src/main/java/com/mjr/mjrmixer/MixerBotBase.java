@@ -172,6 +172,8 @@ public abstract class MixerBotBase {
 			constellationConnectable.on(ConstellationDisconnectEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<ConstellationDisconnectEvent>() {
 				@Override
 				public void onEvent(ConstellationDisconnectEvent event) {
+					if(event.data.reason.contains("429"))
+						MixerReconnectManager.getMixerReconnectThread().setRateLimitDetectedChat(true);
 					MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, getChannelName(), getChannelID(), event.data);
 				}
 			});
@@ -213,6 +215,8 @@ public abstract class MixerBotBase {
 		connectable.on(ChatDisconnectEvent.class, new EventHandler<ChatDisconnectEvent>() {
 			@Override
 			public void onEvent(ChatDisconnectEvent event) {
+				if(event.data.reason.contains("429"))
+					MixerReconnectManager.getMixerReconnectThread().setRateLimitDetectedChat(true);
 				MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, getChannelName(), getChannelID(), event.data);
 			}
 		});
