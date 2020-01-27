@@ -1,17 +1,14 @@
 package com.mjr.mjrmixer;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MixerReconnectThread extends Thread {
-	private List<MixerBotBase> mixerBotsChat = new ArrayList<MixerBotBase>();
-	private List<MixerBotBase> mixerBotsConstell = new ArrayList<MixerBotBase>();
+	private CopyOnWriteArrayList<MixerBotBase> mixerBotsChat = new CopyOnWriteArrayList<MixerBotBase>();
+	private CopyOnWriteArrayList<MixerBotBase> mixerBotsConstell = new CopyOnWriteArrayList<MixerBotBase>();
 
 	private int mixerBotSleepTime;
-	
-	private boolean rateLimitDetectedChat = false;
-	private boolean rateLimitDetectedConstell = false;
 
 	public MixerReconnectThread(int mixerBotSleepTime) {
 		super("Mixer Framework Reconnect Thread");
@@ -25,10 +22,7 @@ public class MixerReconnectThread extends Thread {
 				if (mixerBotsChat.size() != 0) {
 					Iterator<MixerBotBase> iterator = mixerBotsChat.iterator();
 					while (iterator.hasNext()) {
-						if(rateLimitDetectedChat) {
-							Thread.sleep(30 * 1000);
-							rateLimitDetectedChat = false;
-						}
+
 						MixerBotBase bot = iterator.next();
 						boolean done = false;
 						if (bot.isChatConnectionClosed()) {
@@ -43,10 +37,6 @@ public class MixerReconnectThread extends Thread {
 				if (mixerBotsConstell.size() != 0) {
 					Iterator<MixerBotBase> iterator = mixerBotsConstell.iterator();
 					while (iterator.hasNext()) {
-						if(rateLimitDetectedConstell) {
-							Thread.sleep(30 * 1000);
-							rateLimitDetectedConstell = false;
-						}
 						MixerBotBase bot = iterator.next();
 						boolean done = false;
 						if (bot.isConstellationConnectionClosed()) {
@@ -92,21 +82,5 @@ public class MixerReconnectThread extends Thread {
 
 	public int getMixerBotBaseSleepTime() {
 		return mixerBotSleepTime;
-	}
-
-	public boolean isRateLimitDetectedChat() {
-		return rateLimitDetectedChat;
-	}
-
-	public void setRateLimitDetectedChat(boolean rateLimitDetectedChat) {
-		this.rateLimitDetectedChat = rateLimitDetectedChat;
-	}
-
-	public boolean isRateLimitDetectedConstell() {
-		return rateLimitDetectedConstell;
-	}
-
-	public void setRateLimitDetectedConstell(boolean rateLimitDetectedConstell) {
-		this.rateLimitDetectedConstell = rateLimitDetectedConstell;
 	}
 }
