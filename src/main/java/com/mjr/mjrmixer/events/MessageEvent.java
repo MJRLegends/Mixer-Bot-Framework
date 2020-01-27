@@ -8,16 +8,16 @@ import com.mjr.mjrmixer.Event;
 public class MessageEvent extends Event{
 
 	public final String message;
-	public final String channel;
+	public final String channelName;
 	public final int channelID;
 	public final String sender;
 	public final int senderID;
 	public final List<Role> senderRoles;
 	
-	public MessageEvent(String message, String channel, int channelID, String sender, int senderID, List<Role> senderRoles) {
+	public MessageEvent(String message, String channelName, int channelID, String sender, int senderID, List<Role> senderRoles) {
 		super(EventType.MESSAGE);
 		this.message = message;
-		this.channel = channel;
+		this.channelName = channelName;
 		this.channelID = channelID;
 		this.sender = sender;
 		this.senderID = senderID;
@@ -27,7 +27,7 @@ public class MessageEvent extends Event{
 	public MessageEvent() {
 		super(EventType.MESSAGE);
 		this.message = null;
-		this.channel = null;
+		this.channelName = null;
 		this.channelID = -1;
 		this.sender = null;
 		this.senderID = -1;

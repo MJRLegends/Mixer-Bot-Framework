@@ -4,14 +4,14 @@ import com.mjr.mjrmixer.Event;
 
 public class JoinEvent extends Event{
 
-	public final String channel;
+	public final String channelName;
 	public final int channelID;
 	public final String sender;
 	public final int senderID;
 	
-	public JoinEvent(String channel, int channelID, String sender, int senderID) {
+	public JoinEvent(String channelName, int channelID, String sender, int senderID) {
 		super(EventType.JOIN);
-		this.channel = channel;
+		this.channelName = channelName;
 		this.channelID = channelID;
 		this.sender = sender;
 		this.senderID = senderID;
@@ -19,7 +19,7 @@ public class JoinEvent extends Event{
 	
 	public JoinEvent() {
 		super(EventType.JOIN);
-		this.channel = null;
+		this.channelName = null;
 		this.channelID = -1;
 		this.sender = null;
 		this.senderID = -1;

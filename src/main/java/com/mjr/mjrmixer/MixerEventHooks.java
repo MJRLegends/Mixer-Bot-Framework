@@ -17,52 +17,52 @@ import com.mjr.mjrmixer.events.ReconnectEvent;
 import com.mjr.mjrmixer.events.ReconnectEvent.ReconnectType;
 
 public class MixerEventHooks {
-	public static void triggerOnMessageEvent(final String message, final String channel, final int channelID, final String sender, final int senderID, final List<Role> senderRoles) {
+	public static void triggerOnMessageEvent(final String message, final String channelName, final int channelID, final String sender, final int senderID, final List<Role> senderRoles) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.MESSAGE.getName().equalsIgnoreCase(event.type.getName()))
-				((MessageEvent) event).onEvent(new MessageEvent(message, channel, channelID, sender, senderID, senderRoles));
+				((MessageEvent) event).onEvent(new MessageEvent(message, channelName, channelID, sender, senderID, senderRoles));
 		}
 	}
 
-	public static void triggerOnJoinEvent(final String channel, final int channelID, final String sender, final int senderID) {
+	public static void triggerOnJoinEvent(final String channelName, final int channelID, final String sender, final int senderID) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.JOIN.getName().equalsIgnoreCase(event.type.getName()))
-				((JoinEvent) event).onEvent(new JoinEvent(channel, channelID, sender, senderID));
+				((JoinEvent) event).onEvent(new JoinEvent(channelName, channelID, sender, senderID));
 		}
 	}
 
-	public static void triggerOnPartEvent(final String channel, final int channelID, final String sender, final int senderID) {
+	public static void triggerOnPartEvent(final String channelName, final int channelID, final String sender, final int senderID) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.PART.getName().equalsIgnoreCase(event.type.getName()))
-				((PartEvent) event).onEvent(new PartEvent(channel, channelID, sender, senderID));
+				((PartEvent) event).onEvent(new PartEvent(channelName, channelID, sender, senderID));
 		}
 	}
 
-	public static void triggerOnDisconnectEvent(final DisconnectType type, final String channel, final int channelID, ChatDisconnectData data) {
+	public static void triggerOnDisconnectEvent(final DisconnectType type, final String channelName, final int channelID, ChatDisconnectData data) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.DISCONNECT.getName().equalsIgnoreCase(event.type.getName()))
-				((DisconnectEvent) event).onEvent(new DisconnectEvent(type, channel, channelID, data));
+				((DisconnectEvent) event).onEvent(new DisconnectEvent(type, channelName, channelID, data));
 		}
 	}
 
-	public static void triggerOnDisconnectEvent(final DisconnectType type, final String channel, final int channelID, ConstellationDisconnectData data) {
+	public static void triggerOnDisconnectEvent(final DisconnectType type, final String channelName, final int channelID, ConstellationDisconnectData data) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.DISCONNECT.getName().equalsIgnoreCase(event.type.getName()))
-				((DisconnectEvent) event).onEvent(new DisconnectEvent(type, channel, channelID, data));
+				((DisconnectEvent) event).onEvent(new DisconnectEvent(type, channelName, channelID, data));
 		}
 	}
 
-	public static void triggerOnReconnectEvent(final ReconnectType type, final String channel, final int channelID) {
+	public static void triggerOnReconnectEvent(final ReconnectType type, final String channelName, final int channelID) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.RECONNECT.getName().equalsIgnoreCase(event.type.getName()))
-				((ReconnectEvent) event).onEvent(new ReconnectEvent(type, channel, channelID));
+				((ReconnectEvent) event).onEvent(new ReconnectEvent(type, channelName, channelID));
 		}
 	}
 
-	public static void triggerOnInfoEvent(String message) {
+	public static void triggerOnInfoEvent(final String channelName, final int channelID, String message) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.INFOMSG.getName().equalsIgnoreCase(event.type.getName()))
-				((InfoEvent) event).onEvent(new InfoEvent(message));
+				((InfoEvent) event).onEvent(new InfoEvent(message, channelID, channelName));
 		}
 	}
 
