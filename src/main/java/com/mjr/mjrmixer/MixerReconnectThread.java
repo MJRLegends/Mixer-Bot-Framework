@@ -31,7 +31,7 @@ public class MixerReconnectThread extends Thread {
 						}
 						Thread.sleep(mixerBotSleepTime * 1000);
 						if (done && !bot.isChatConnectionClosed())
-							iterator.remove();
+							mixerBotsChat.remove(bot);
 					}
 				}
 				if (mixerBotsConstell.size() != 0) {
@@ -45,7 +45,7 @@ public class MixerReconnectThread extends Thread {
 						}
 						Thread.sleep(mixerBotSleepTime * 1000);
 						if (done && !bot.isConstellationConnectionClosed())
-							iterator.remove();
+							mixerBotsConstell.remove(bot);
 					}
 				}
 
