@@ -392,6 +392,10 @@ public abstract class MixerBotBase {
 		}
 		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "unban " + user);
 	}
+	
+	public void reloadModerators() throws IOException {
+		this.loadModerators();
+	}
 
 	private void loadModerators() throws IOException {
 		String result = "";
