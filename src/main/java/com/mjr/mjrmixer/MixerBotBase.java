@@ -22,6 +22,7 @@ import com.mixer.api.resource.chat.events.EventHandler;
 import com.mixer.api.resource.chat.events.IncomingMessageEvent;
 import com.mixer.api.resource.chat.events.UserJoinEvent;
 import com.mixer.api.resource.chat.events.UserLeaveEvent;
+import com.mixer.api.resource.chat.events.UserUpdateEvent;
 import com.mixer.api.resource.chat.events.WelcomeEvent;
 import com.mixer.api.resource.chat.events.data.MessageComponent.MessageTextComponent;
 import com.mixer.api.resource.chat.methods.AuthenticateMessage;
