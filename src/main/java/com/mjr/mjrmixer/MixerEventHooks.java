@@ -6,21 +6,15 @@ import com.mixer.api.resource.MixerUser.Role;
 import com.mixer.api.resource.chat.events.data.ChatDisconnectData;
 import com.mixer.api.resource.constellation.events.data.ConstellationDisconnectData;
 import com.mjr.mjrmixer.Event.EventType;
-import com.mjr.mjrmixer.events.DisconnectEvent;
+import com.mjr.mjrmixer.events.*;
 import com.mjr.mjrmixer.events.DisconnectEvent.DisconnectType;
-import com.mjr.mjrmixer.events.ErrorEvent;
-import com.mjr.mjrmixer.events.InfoEvent;
-import com.mjr.mjrmixer.events.JoinEvent;
-import com.mjr.mjrmixer.events.MessageEvent;
-import com.mjr.mjrmixer.events.PartEvent;
-import com.mjr.mjrmixer.events.ReconnectEvent;
 import com.mjr.mjrmixer.events.ReconnectEvent.ReconnectType;
 
 public class MixerEventHooks {
-	public static void triggerOnMessageEvent(final String message, final String channelName, final int channelID, final String sender, final int senderID, final List<Role> senderRoles) {
+	public static void triggerOnMessageEvent(final String message, List<String> emotes, List<String> links, final String channelName, final int channelID, final String sender, final int senderID, final List<Role> senderRoles) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.MESSAGE.getName().equalsIgnoreCase(event.type.getName()))
-				((MessageEvent) event).onEvent(new MessageEvent(message, channelName, channelID, sender, senderID, senderRoles));
+				((MessageEvent) event).onEvent(new MessageEvent(message, emotes, links, channelName, channelID, sender, senderID, senderRoles));
 		}
 	}
 

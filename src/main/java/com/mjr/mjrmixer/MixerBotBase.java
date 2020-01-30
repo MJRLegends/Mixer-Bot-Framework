@@ -188,10 +188,16 @@ public abstract class MixerBotBase {
 				}
 				messageIDCache.add(event);
 				String msg = "";
+				List<String> emotes = new ArrayList<String>();
+				List<String> links = new ArrayList<String>();
 				for (MessageTextComponent msgp : event.data.message.message) {
-					msg += msgp.data;
+					if (msgp.type != null && msgp.type.equals(MessageTextComponent.Type.EMOTICON))
+						emotes.add(msgp.text);
+					else if (msgp.type != null && msgp.type.equals(MessageTextComponent.Type.LINK))
+						links.add(msgp.text);
+					msg += msgp.text;
 				}
-				MixerEventHooks.triggerOnMessageEvent(msg, connectedChannel.username, event.data.channel, event.data.userName, event.data.userId, event.data.userRoles);
+				MixerEventHooks.triggerOnMessageEvent(msg, emotes, links, connectedChannel.username, event.data.channel, event.data.userName, event.data.userId, event.data.userRoles);
 			}
 		});
 		connectable.on(UserJoinEvent.class, new EventHandler<UserJoinEvent>() {
@@ -555,7 +561,7 @@ public abstract class MixerBotBase {
 		this.channelName = channelName;
 	}
 
-	public abstract void onMessage(String sender, int senderID, List<Role> userRoles, String message);
+	public abstract void onMessage(String sender, int senderID, List<Role> userRoles, String message, List<String> emotes, List<String> links);
 
 	public abstract void onJoin(String sender, int senderID);
 
