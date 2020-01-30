@@ -222,6 +222,12 @@ public abstract class MixerBotBase {
 				MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, getChannelName(), getChannelID(), event.data);
 			}
 		});
+		connectable.on(UserUpdateEvent.class, new EventHandler<UserUpdateEvent>() {
+			@Override
+			public void onEvent(UserUpdateEvent event) {
+				MixerEventHooks.triggerOnUserUpdateEvent(getChannelName(), getChannelID(), event.data.user, event.data.roles);
+			}
+		});
 		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Finished Setting up of Chat Events: IncomingMessageEvent, UserJoinEvent, UserLeaveEvent, ChatDisconnectEvent");
 
 		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Loading Moderators & Viewers");
@@ -568,4 +574,6 @@ public abstract class MixerBotBase {
 	public abstract void onPart(String sender, int senderID);
 
 	public abstract void onLiveEvent(LiveEvent event);
+
+	public abstract void onUserUpdate(int userID, List<Role> userRoles);
 }

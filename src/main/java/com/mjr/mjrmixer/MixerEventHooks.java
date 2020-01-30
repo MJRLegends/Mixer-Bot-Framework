@@ -67,4 +67,11 @@ public class MixerEventHooks {
 		}
 	}
 
+	public static void triggerOnUserUpdateEvent(final String channelName, final int channelID, int userID, List<Role> userRoles) {
+		for (Event event : MixerManager.getEventListeners()) {
+			if (EventType.USERUPDATE.getName().equalsIgnoreCase(event.type.getName()))
+				((UserUpdateEvent) event).onEvent(new UserUpdateEvent(channelName, channelID, userID, userRoles));
+		}
+	}
+
 }
