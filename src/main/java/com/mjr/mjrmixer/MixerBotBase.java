@@ -395,6 +395,7 @@ public abstract class MixerBotBase {
 	}
 	
 	public void reloadModerators() throws IOException {
+		this.moderators.clear();
 		this.loadModerators();
 	}
 
