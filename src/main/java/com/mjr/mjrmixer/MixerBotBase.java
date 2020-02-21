@@ -17,13 +17,7 @@ import com.mixer.api.MixerAPI;
 import com.mixer.api.resource.MixerUser;
 import com.mixer.api.resource.MixerUser.Role;
 import com.mixer.api.resource.chat.MixerChat;
-import com.mixer.api.resource.chat.events.ChatDisconnectEvent;
-import com.mixer.api.resource.chat.events.EventHandler;
-import com.mixer.api.resource.chat.events.IncomingMessageEvent;
-import com.mixer.api.resource.chat.events.UserJoinEvent;
-import com.mixer.api.resource.chat.events.UserLeaveEvent;
-import com.mixer.api.resource.chat.events.UserUpdateEvent;
-import com.mixer.api.resource.chat.events.WelcomeEvent;
+import com.mixer.api.resource.chat.events.*;
 import com.mixer.api.resource.chat.events.data.MessageComponent.MessageTextComponent;
 import com.mixer.api.resource.chat.methods.AuthenticateMessage;
 import com.mixer.api.resource.chat.methods.ChatSendMethod;
@@ -66,6 +60,12 @@ public abstract class MixerBotBase {
 	private int channelID;
 	private int userID;
 	private String channelName;
+
+	private long lastReconnectTimeChat;
+	private int lastReconnectCodeChat;
+
+	private long lastReconnectTimeConstel;
+	private int lastReconnectCodeConstel;
 
 	public MixerBotBase(String clientId, String authcode, String botName) {
 		this.botName = botName;
@@ -268,10 +268,17 @@ public abstract class MixerBotBase {
 		this.authenticated = false;
 	}
 
+	public final void addForReconnectChat(int code) {
+		this.lastReconnectCodeChat = code;
+		MixerReconnectManager.getMixerReconnectThread().addMixerBotChatBase(this);
+		
+	}
+
 	/**
 	 * Used to reconnect the bot from a channel's chat
 	 */
 	public final void reconnectChat() {
+		this.lastReconnectTimeChat = System.currentTimeMillis();
 		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CHAT, this.channelName, this.channelID);
 		if (this.connectable.connect())
 			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Reconnected to Mixer Chat!");
@@ -287,10 +294,16 @@ public abstract class MixerBotBase {
 		this.constellationConnectable.disconnect();
 	}
 
+	public final void addForReconnectConstellation(int code) {
+		this.lastReconnectCodeConstel = code;
+		MixerReconnectManager.getMixerReconnectThread().addMixerBotChatConstellation(this);
+	}
+
 	/**
 	 * Used to reconnect the bot from a channel's constellation
 	 */
 	public final void reconnectConstellation() {
+		this.lastReconnectTimeConstel = System.currentTimeMillis();
 		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CONSTELLATION, this.channelName, this.channelID);
 		if (this.constellationConnectable.connect())
 			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Reconnected to Mixer Constellation!");
@@ -393,7 +406,7 @@ public abstract class MixerBotBase {
 		}
 		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "unban " + user);
 	}
-	
+
 	public void reloadModerators() throws IOException {
 		this.moderators.clear();
 		this.loadModerators();
@@ -571,6 +584,22 @@ public abstract class MixerBotBase {
 
 	public void setChannelName(String channelName) {
 		this.channelName = channelName;
+	}
+
+	public long getLastReconnectTimeChat() {
+		return lastReconnectTimeChat;
+	}
+
+	public int getLastReconnectCodeChat() {
+		return lastReconnectCodeChat;
+	}
+
+	public long getLastReconnectTimeConstel() {
+		return lastReconnectTimeConstel;
+	}
+
+	public int getLastReconnectCodeConstel() {
+		return lastReconnectCodeConstel;
 	}
 
 	public abstract void onMessage(String sender, int senderID, List<Role> userRoles, String message, List<String> emotes, List<String> links);

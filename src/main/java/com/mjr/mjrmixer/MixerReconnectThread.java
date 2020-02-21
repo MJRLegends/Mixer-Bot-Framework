@@ -22,30 +22,33 @@ public class MixerReconnectThread extends Thread {
 				if (mixerBotsChat.size() != 0) {
 					Iterator<MixerBotBase> iterator = mixerBotsChat.iterator();
 					while (iterator.hasNext()) {
-
 						MixerBotBase bot = iterator.next();
-						boolean done = false;
-						if (bot.isChatConnectionClosed()) {
-							bot.reconnectChat();
-							done = true;
+						if (bot.getLastReconnectCodeChat() != 1008 || (bot.getLastReconnectCodeChat() == 1008 && bot.getLastReconnectTimeChat() + 30000 <= System.currentTimeMillis())) {
+							boolean done = false;
+							if (bot.isChatConnectionClosed()) {
+								bot.reconnectChat();
+								done = true;
+							}
+							Thread.sleep(mixerBotSleepTime * 1000);
+							if (done && !bot.isChatConnectionClosed())
+								mixerBotsChat.remove(bot);
 						}
-						Thread.sleep(mixerBotSleepTime * 1000);
-						if (done && !bot.isChatConnectionClosed())
-							mixerBotsChat.remove(bot);
 					}
 				}
 				if (mixerBotsConstell.size() != 0) {
 					Iterator<MixerBotBase> iterator = mixerBotsConstell.iterator();
 					while (iterator.hasNext()) {
 						MixerBotBase bot = iterator.next();
-						boolean done = false;
-						if (bot.isConstellationConnectionClosed()) {
-							bot.reconnectConstellation();
-							done = true;
+						if (bot.getLastReconnectCodeConstel() != 1008 || (bot.getLastReconnectCodeConstel() == 1008 && bot.getLastReconnectTimeConstel() + 30000 <= System.currentTimeMillis())) {
+							boolean done = false;
+							if (bot.isConstellationConnectionClosed()) {
+								bot.reconnectConstellation();
+								done = true;
+							}
+							Thread.sleep(mixerBotSleepTime * 1000);
+							if (done && !bot.isConstellationConnectionClosed())
+								mixerBotsConstell.remove(bot);
 						}
-						Thread.sleep(mixerBotSleepTime * 1000);
-						if (done && !bot.isConstellationConnectionClosed())
-							mixerBotsConstell.remove(bot);
 					}
 				}
 
