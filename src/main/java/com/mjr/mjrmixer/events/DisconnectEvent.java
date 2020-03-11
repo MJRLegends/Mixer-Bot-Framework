@@ -4,6 +4,9 @@ import com.mixer.api.resource.chat.events.data.ChatDisconnectData;
 import com.mixer.api.resource.constellation.events.data.ConstellationDisconnectData;
 import com.mjr.mjrmixer.Event;
 
+/**
+ * Reconnecting of Chat/Constellation Connections is done automatically by the Framework, this event is designed to be used for notification of disconnect
+ */
 public class DisconnectEvent extends Event {
 
 	public enum DisconnectType {

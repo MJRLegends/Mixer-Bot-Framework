@@ -2,6 +2,9 @@ package com.mjr.mjrmixer.events;
 
 import com.mjr.mjrmixer.Event;
 
+/**
+ * Reconnecting of Chat/Constellation Connections is done automatically by the Framework, this event is designed to be used for notification of reconnecting
+ */
 public class ReconnectEvent extends Event {
 
 	public enum ReconnectType {
