@@ -26,8 +26,8 @@ public class MixerReconnectThread extends Thread {
 					while (iterator.hasNext()) {
 						MixerBotBase bot = iterator.next();
 						do {
-							attempt = attempt + 1;
 							if (bot.getLastReconnectCodeChat() != 1008 || (bot.getLastReconnectCodeChat() == 1008 && bot.getLastReconnectTimeChat() + 30000 <= System.currentTimeMillis())) {
+								attempt = attempt + 1;
 								if (bot.isChatConnectionClosed()) {
 									Callable<Boolean> callable = () -> {
 										bot.reconnectChat();
@@ -57,8 +57,8 @@ public class MixerReconnectThread extends Thread {
 					while (iterator.hasNext()) {
 						MixerBotBase bot = iterator.next();
 						do {
-							attempt = attempt + 1;
 							if (bot.getLastReconnectCodeConstel() != 1008 || (bot.getLastReconnectCodeConstel() == 1008 && bot.getLastReconnectTimeConstel() + 30000 <= System.currentTimeMillis())) {
+								attempt = attempt + 1;
 								if (bot.isConstellationConnectionClosed()) {
 									Callable<Boolean> callable = () -> {
 										bot.reconnectConstellation();
