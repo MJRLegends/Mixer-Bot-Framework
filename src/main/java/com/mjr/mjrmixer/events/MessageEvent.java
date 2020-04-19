@@ -5,7 +5,7 @@ import java.util.List;
 import com.mixer.api.resource.MixerUser.Role;
 import com.mjr.mjrmixer.Event;
 
-public class MessageEvent extends Event{
+public class MessageEvent extends Event {
 
 	public final String message;
 	public final List<String> emotes;
@@ -15,7 +15,7 @@ public class MessageEvent extends Event{
 	public final String sender;
 	public final int senderID;
 	public final List<Role> senderRoles;
-	
+
 	public MessageEvent(String message, List<String> emotes, List<String> links, String channelName, int channelID, String sender, int senderID, List<Role> senderRoles) {
 		super(EventType.MESSAGE);
 		this.message = message;
@@ -27,7 +27,7 @@ public class MessageEvent extends Event{
 		this.senderID = senderID;
 		this.senderRoles = senderRoles;
 	}
-	
+
 	public MessageEvent() {
 		super(EventType.MESSAGE);
 		this.message = null;
@@ -39,9 +39,9 @@ public class MessageEvent extends Event{
 		this.senderID = -1;
 		this.senderRoles = null;
 	}
-	
+
 	public void onEvent(MessageEvent event) {
-		
+
 	}
 
 }

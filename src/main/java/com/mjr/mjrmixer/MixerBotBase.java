@@ -61,9 +61,11 @@ public abstract class MixerBotBase {
 	private int userID;
 	private String channelName;
 
+	private long lastDisconnectTimeChat;
 	private long lastReconnectTimeChat;
 	private int lastReconnectCodeChat;
 
+	private long lastDisconnectTimeConstel;
 	private long lastReconnectTimeConstel;
 	private int lastReconnectCodeConstel;
 
@@ -102,15 +104,14 @@ public abstract class MixerBotBase {
 
 	/**
 	 * Used to connect the bot to Mixer & join a channel
-	 * 
+	 *
 	 * @param events
 	 * @param channelID
-	 *
-	 * @param userID (DONT USE channelID)
+	 * @param userID    (DONT USE channelID)
+	 * @return channelName
 	 * @throws InterruptedException
 	 * @throws ExecutionException
 	 * @throws IOException
-	 * @return channelName
 	 */
 	protected void joinMixerChannel(int userID) throws InterruptedException, ExecutionException, IOException {
 		joinMixerChannel(userID, new ArrayList<String>());
@@ -119,12 +120,12 @@ public abstract class MixerBotBase {
 	/**
 	 * Used to connect the bot to Mixer & join a channel
 	 *
-	 * @param userID (DONT USE channelID)
+	 * @param userID     (DONT USE channelID)
 	 * @param liveEvents
+	 * @return channelName
 	 * @throws InterruptedException
 	 * @throws ExecutionException
 	 * @throws IOException
-	 * @return channelName
 	 */
 	protected void joinMixerChannel(int userID, final ArrayList<String> eventsInput) throws InterruptedException, ExecutionException, IOException {
 		this.liveEvents = eventsInput;
@@ -173,6 +174,7 @@ public abstract class MixerBotBase {
 			constellationConnectable.on(ConstellationDisconnectEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<ConstellationDisconnectEvent>() {
 				@Override
 				public void onEvent(ConstellationDisconnectEvent event) {
+					lastDisconnectTimeConstel = System.currentTimeMillis();
 					MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, getChannelName(), getChannelID(), event.data);
 				}
 			});
@@ -220,6 +222,7 @@ public abstract class MixerBotBase {
 		connectable.on(ChatDisconnectEvent.class, new EventHandler<ChatDisconnectEvent>() {
 			@Override
 			public void onEvent(ChatDisconnectEvent event) {
+				lastDisconnectTimeChat = System.currentTimeMillis();
 				MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, getChannelName(), getChannelID(), event.data);
 			}
 		});
@@ -271,7 +274,7 @@ public abstract class MixerBotBase {
 	public final void addForReconnectChat(int code) {
 		this.lastReconnectCodeChat = code;
 		MixerReconnectManager.getMixerReconnectThread().addMixerBotChatBase(this);
-		
+
 	}
 
 	/**
@@ -586,12 +589,20 @@ public abstract class MixerBotBase {
 		this.channelName = channelName;
 	}
 
+	public long getLastDisconnectTimeChat() {
+		return lastDisconnectTimeChat;
+	}
+
 	public long getLastReconnectTimeChat() {
 		return lastReconnectTimeChat;
 	}
 
 	public int getLastReconnectCodeChat() {
 		return lastReconnectCodeChat;
+	}
+
+	public long getLastDisconnectTimeConstel() {
+		return lastDisconnectTimeConstel;
 	}
 
 	public long getLastReconnectTimeConstel() {

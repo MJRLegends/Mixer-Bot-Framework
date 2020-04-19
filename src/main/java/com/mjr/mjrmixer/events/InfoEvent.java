@@ -7,7 +7,7 @@ public class InfoEvent extends Event {
 	public final int channelID;
 	public final String channelName;
 
-	public InfoEvent(String message, int channelID,  String channelName) {
+	public InfoEvent(String message, int channelID, String channelName) {
 		super(EventType.INFOMSG);
 		this.message = message;
 		this.channelID = channelID;

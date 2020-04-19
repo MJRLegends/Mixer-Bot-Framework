@@ -1,26 +1,26 @@
 package com.mjr.mjrmixer.chatMethods;
 
-import com.mixer.api.resource.chat.AbstractChatMethod;
-import com.mixer.api.resource.chat.events.data.IncomingMessageData;
-
 import java.util.Arrays;
 import java.util.List;
 
+import com.mixer.api.resource.chat.AbstractChatMethod;
+import com.mixer.api.resource.chat.events.data.IncomingMessageData;
+
 public class ChatDeleteMethod extends AbstractChatMethod {
-    public static ChatDeleteMethod of(IncomingMessageData data) {
-        return of(data.id);
-    }
-    
-    public static ChatDeleteMethod of(String messageID) {
-        ChatDeleteMethod scm = new ChatDeleteMethod();
-        scm.arguments = Arrays.asList(messageID);
+	public static ChatDeleteMethod of(IncomingMessageData data) {
+		return of(data.id);
+	}
 
-        return scm;
-    }
+	public static ChatDeleteMethod of(String messageID) {
+		ChatDeleteMethod scm = new ChatDeleteMethod();
+		scm.arguments = Arrays.asList(messageID);
 
-    public ChatDeleteMethod() {
-        super("deleteMessage");
-    }
+		return scm;
+	}
 
-    public List<String> arguments;
+	public ChatDeleteMethod() {
+		super("deleteMessage");
+	}
+
+	public List<String> arguments;
 }

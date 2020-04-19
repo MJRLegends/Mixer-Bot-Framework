@@ -9,7 +9,7 @@ public class MixerReconnectManager {
 
 	public static void initMixerReconnectThreadIfDoesntExist() {
 		if (mixerReconnectThread == null) {
-			mixerReconnectThread = new MixerReconnectThread(15);
+			mixerReconnectThread = new MixerReconnectThread(10);
 			mixerReconnectThread.start();
 		}
 	}
