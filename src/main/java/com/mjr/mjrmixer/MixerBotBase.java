@@ -105,8 +105,6 @@ public abstract class MixerBotBase {
 	/**
 	 * Used to connect the bot to Mixer & join a channel
 	 *
-	 * @param events
-	 * @param channelID
 	 * @param userID    (DONT USE channelID)
 	 * @return channelName
 	 * @throws InterruptedException
@@ -121,7 +119,7 @@ public abstract class MixerBotBase {
 	 * Used to connect the bot to Mixer & join a channel
 	 *
 	 * @param userID     (DONT USE channelID)
-	 * @param liveEvents
+	 * @param eventsInput
 	 * @return channelName
 	 * @throws InterruptedException
 	 * @throws ExecutionException
@@ -144,7 +142,7 @@ public abstract class MixerBotBase {
 		this.setChannelID(connectedChannel.channel.id);
 		this.setChannelName(connectedChannel.username);
 		chat = mixer.use(ChatService.class).findOne(connectedChannel.channel.id).get();
-		connectable = chat.connectable(this.mixer);
+		connectable = chat.connectable(this.mixer, false);
 		connected = connectable.connect();
 		connectable.on(WelcomeEvent.class, new EventHandler<WelcomeEvent>() {
 			@Override
@@ -157,7 +155,7 @@ public abstract class MixerBotBase {
 		if (!liveEvents.isEmpty()) {
 			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Starting Setting up of Constellation Events: HelloEvent, LiveEvent, ConstellationDisconnectEvent");
 			constellation = new MixerConstellation();
-			constellationConnectable = constellation.connectable(mixer);
+			constellationConnectable = constellation.connectable(mixer, false);
 			constellationConnectable.connect();
 			constellationConnectable.on(HelloEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<HelloEvent>() {
 				@Override
@@ -283,10 +281,14 @@ public abstract class MixerBotBase {
 	public final void reconnectChat() {
 		this.lastReconnectTimeChat = System.currentTimeMillis();
 		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CHAT, this.channelName, this.channelID);
-		if (this.connectable.connect())
-			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Reconnected to Mixer Chat!");
-		else
-			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Failed to be reconnected to Mixer Chat!");
+		try {
+			if (this.connectable.reconnectBlocking())
+				MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Reconnected to Mixer Chat!");
+			else
+				MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Failed to be reconnected to Mixer Chat!");
+		} catch (InterruptedException e) {
+			MixerEventHooks.triggerOnErrorEvent("InterruptedException when Reconnecting Websocket", e);
+		}
 	}
 
 	/**
@@ -308,10 +310,14 @@ public abstract class MixerBotBase {
 	public final void reconnectConstellation() {
 		this.lastReconnectTimeConstel = System.currentTimeMillis();
 		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CONSTELLATION, this.channelName, this.channelID);
-		if (this.constellationConnectable.connect())
-			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Reconnected to Mixer Constellation!");
-		else
-			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Failed to be reconnected to Mixer Constellation!");
+		try {
+			if (this.constellationConnectable.reconnectBlocking())
+				MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Reconnected to Mixer Constellation!");
+			else
+				MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Failed to be reconnected to Mixer Constellation!");
+		} catch (InterruptedException e) {
+			MixerEventHooks.triggerOnErrorEvent("InterruptedException when Reconnecting Websocket", e);
+		}
 	}
 
 	/**
