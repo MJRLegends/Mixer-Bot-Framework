@@ -270,6 +270,10 @@ public abstract class MixerBotBase {
 		this.authenticated = false;
 	}
 
+	/**
+	 * Used to add Chat Connection to Reconnect Thread
+	 * @param code
+	 */
 	public final void addForReconnectChat(int code) {
 		this.lastReconnectCodeChat = code;
 		MixerReconnectManager.getMixerReconnectThread().addMixerBotChatBase(this);
@@ -299,6 +303,11 @@ public abstract class MixerBotBase {
 		this.constellationConnectable.disconnect();
 	}
 
+	/**
+	 * Used to add Chat Constellation to Reconnect Thread
+	 *
+	 * @param code
+	 */
 	public final void addForReconnectConstellation(int code) {
 		this.lastReconnectCodeConstel = code;
 		MixerReconnectManager.getMixerReconnectThread().addMixerBotChatConstellation(this);
@@ -416,6 +425,10 @@ public abstract class MixerBotBase {
 		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "unban " + user);
 	}
 
+	/**
+	 * Clean & Reload local storage of moderators
+	 * @throws IOException
+	 */
 	public void reloadModerators() throws IOException {
 		this.moderators.clear();
 		this.loadModerators();
