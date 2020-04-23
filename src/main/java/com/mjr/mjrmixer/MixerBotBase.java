@@ -18,6 +18,7 @@ import com.mixer.api.resource.MixerUser;
 import com.mixer.api.resource.MixerUser.Role;
 import com.mixer.api.resource.chat.MixerChat;
 import com.mixer.api.resource.chat.events.*;
+import com.mixer.api.resource.chat.events.data.ChatDisconnectData;
 import com.mixer.api.resource.chat.events.data.MessageComponent.MessageTextComponent;
 import com.mixer.api.resource.chat.methods.AuthenticateMessage;
 import com.mixer.api.resource.chat.methods.ChatSendMethod;
@@ -259,7 +260,7 @@ public abstract class MixerBotBase {
 	 * Used to disconnect the bot from a channel's chat
 	 */
 	public final void disconnectChat() {
-		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, this.channelName, this.channelID, new ConstellationDisconnectData(1000, "Requested Disconnect By Bot", false));
+		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, this.channelName, this.channelID, new ChatDisconnectData(1000, "Requested Disconnect By Bot", false));
 		connectable.disconnect();
 		viewers.clear();
 		moderators.clear();
@@ -272,7 +273,6 @@ public abstract class MixerBotBase {
 	public final void addForReconnectChat(int code) {
 		this.lastReconnectCodeChat = code;
 		MixerReconnectManager.getMixerReconnectThread().addMixerBotChatBase(this);
-
 	}
 
 	/**
