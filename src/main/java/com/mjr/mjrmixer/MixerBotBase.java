@@ -126,7 +126,7 @@ public abstract class MixerBotBase {
 	/**
 	 * Used to connect the bot to Mixer & join a channel
 	 *
-	 * @param userID    (DONT USE channelID)
+	 * @param userID (DONT USE channelID)
 	 * @return channelName
 	 * @throws InterruptedException
 	 * @throws ExecutionException
@@ -139,7 +139,7 @@ public abstract class MixerBotBase {
 	/**
 	 * Used to connect the bot to Mixer & join a channel
 	 *
-	 * @param userID     (DONT USE channelID)
+	 * @param userID      (DONT USE channelID)
 	 * @param eventsInput
 	 * @return channelName
 	 * @throws InterruptedException
@@ -292,6 +292,7 @@ public abstract class MixerBotBase {
 
 	/**
 	 * Used to add Chat Connection to Reconnect Thread
+	 *
 	 * @param code
 	 */
 	public final void addForReconnectChat(int code) {
@@ -447,6 +448,7 @@ public abstract class MixerBotBase {
 
 	/**
 	 * Clean & Reload local storage of moderators
+	 *
 	 * @throws IOException
 	 */
 	public void reloadModerators() throws IOException {
