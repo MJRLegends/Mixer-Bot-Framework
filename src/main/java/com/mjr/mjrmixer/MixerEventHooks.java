@@ -67,6 +67,15 @@ public class MixerEventHooks {
 		}
 	}
 
+	public static void triggerOnFailedAuthEvent(MixerBotBase bot, String errorMessage, int numberOfFailedAuths) {
+		for (Event event : MixerManager.getEventListeners()) {
+			if (EventType.FAILEDAUTH.getName().equalsIgnoreCase(event.type.getName()))
+				((FailedAuthEvent) event).onEvent(new FailedAuthEvent(errorMessage, numberOfFailedAuths, bot.getChannelName(), bot.getChannelID()));
+		}
+		if(bot != null && bot.getConnectedChannel() == null)
+			bot.updateConnectedChannel();
+	}
+
 	public static void triggerOnUserUpdateEvent(final String channelName, final int channelID, int userID, List<Role> userRoles) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.USERUPDATE.getName().equalsIgnoreCase(event.type.getName()))

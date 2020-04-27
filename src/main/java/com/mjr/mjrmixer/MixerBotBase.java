@@ -70,6 +70,8 @@ public abstract class MixerBotBase {
 	private long lastReconnectTimeConstel;
 	private int lastReconnectCodeConstel;
 
+	private int numberOfFailedAuths = 0;
+
 	public MixerBotBase(String clientId, String authcode, String botName) {
 		this.botName = botName;
 		mixer = new MixerAPI(clientId, authcode);
@@ -79,18 +81,36 @@ public abstract class MixerBotBase {
 	}
 
 	private void authWithMixer() {
-		connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
-			@Override
-			public void onSuccess(AuthenticationReply reply) {
-				authenticated = true;
-				MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Authenticated to Mixer");
-			}
+		if (connectedChannel == null)
+			MixerEventHooks.triggerOnFailedAuthEvent(this, "ConnectedChannel was null when trying to Authenticate with Mixer, Mixer Framework will try to fix this!", numberOfFailedAuths);
+		if (user == null)
+			MixerEventHooks.triggerOnFailedAuthEvent(this, "User was null when trying to Authenticate with Mixer", numberOfFailedAuths);
+		if (chat.authkey == null)
+			MixerEventHooks.triggerOnFailedAuthEvent(this, "User Auth Key was null when trying to Authenticate with Mixer", numberOfFailedAuths);
+		else {
+			connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
+				@Override
+				public void onSuccess(AuthenticationReply reply) {
+					MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Authenticated to Mixer, Error:" + reply.error + ", Authed: " + reply.authenticated + ", ID: " + reply.id + ", Type: " + reply.type);
+					if (reply.error == null) {
+						authenticated = true;
+						numberOfFailedAuths = 0;
+					} else {
+						authenticated = false;
+						numberOfFailedAuths++;
+						MixerEventHooks.triggerOnFailedAuthEvent(null, "Failed to Authenticate with Mixer, due to Error: " + reply.error, numberOfFailedAuths);
+					}
+				}
 
-			@Override
-			public void onFailure(Throwable err) {
-				MixerEventHooks.triggerOnErrorEvent("Failed to Authenticate with Mixer", err);
-			}
-		});
+				@Override
+				public void onFailure(Throwable err) {
+					authenticated = false;
+					numberOfFailedAuths++;
+					MixerEventHooks.triggerOnErrorEvent("Failed to Authenticate with Mixer", err);
+					MixerEventHooks.triggerOnFailedAuthEvent(null, "Failed to Authenticate with Mixer, due to an exception", numberOfFailedAuths);
+				}
+			});
+		}
 	}
 
 	private void requestEventsConstellation() {
@@ -546,32 +566,48 @@ public abstract class MixerBotBase {
 			moderators.remove(moderator.toLowerCase());
 	}
 
+	public MixerUser getConnectedChannel() {
+		return connectedChannel;
+	}
+
 	public int getNumOfFollowers() {
+		if (connected == false)
+			return -1;
 		updateConnectedChannel();
 		return connectedChannel.channel.numFollowers;
 	}
 
 	public String getAudience() {
+		if (connected == false)
+			return null;
 		updateConnectedChannel();
 		return connectedChannel.channel.audience.toString();
 	}
 
 	public int getNumOfTotalViewers() {
+		if (connected == false)
+			return -1;
 		updateConnectedChannel();
 		return connectedChannel.channel.viewersTotal;
 	}
 
 	public boolean isStreaming() {
+		if (connected == false)
+			return false;
 		updateConnectedChannel();
 		return connectedChannel.channel.online;
 	}
 
 	public boolean isPartnered() {
+		if (connected == false)
+			return false;
 		updateConnectedChannel();
 		return connectedChannel.channel.partnered;
 	}
 
 	public Date getUpdatedAt() {
+		if (connected == false)
+			return null;
 		updateConnectedChannel();
 		return connectedChannel.channel.updatedAt;
 	}
