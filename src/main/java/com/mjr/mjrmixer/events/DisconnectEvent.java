@@ -14,23 +14,23 @@ public class DisconnectEvent extends Event {
 	}
 
 	public final DisconnectType type;
-	public final String channel;
+	public final String channelName;
 	public final int channelID;
 	public ConstellationDisconnectData constellationData;
 	public ChatDisconnectData chatData;
 
-	public DisconnectEvent(DisconnectType type, String channel, int channelID, ConstellationDisconnectData constellationData) {
+	public DisconnectEvent(DisconnectType type, String channelName, int channelID, ConstellationDisconnectData constellationData) {
 		super(EventType.DISCONNECT);
 		this.type = type;
-		this.channel = channel;
+		this.channelName = channelName;
 		this.channelID = channelID;
 		this.constellationData = constellationData;
 	}
 
-	public DisconnectEvent(DisconnectType type, String channel, int channelID, ChatDisconnectData chatData) {
+	public DisconnectEvent(DisconnectType type, String channelName, int channelID, ChatDisconnectData chatData) {
 		super(EventType.DISCONNECT);
 		this.type = type;
-		this.channel = channel;
+		this.channelName = channelName;
 		this.channelID = channelID;
 		this.chatData = chatData;
 	}
@@ -38,7 +38,7 @@ public class DisconnectEvent extends Event {
 	public DisconnectEvent() {
 		super(EventType.DISCONNECT);
 		this.type = null;
-		this.channel = null;
+		this.channelName = null;
 		this.channelID = -1;
 		this.constellationData = null;
 		this.chatData = null;

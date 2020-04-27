@@ -12,20 +12,20 @@ public class ReconnectEvent extends Event {
 	}
 
 	public final ReconnectType type;
-	public final String channel;
+	public final String channelName;
 	public final int channelID;
 
-	public ReconnectEvent(ReconnectType type, String channel, int channelID) {
+	public ReconnectEvent(ReconnectType type, String channelName, int channelID) {
 		super(EventType.RECONNECT);
 		this.type = type;
-		this.channel = channel;
+		this.channelName = channelName;
 		this.channelID = channelID;
 	}
 
 	public ReconnectEvent() {
 		super(EventType.RECONNECT);
 		this.type = null;
-		this.channel = null;
+		this.channelName = null;
 		this.channelID = -1;
 	}
 
