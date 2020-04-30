@@ -36,6 +36,8 @@ import com.mixer.api.resource.constellation.ws.MixerConstellationConnectable;
 import com.mixer.api.services.impl.ChatService;
 import com.mixer.api.services.impl.UsersService;
 import com.mjr.mjrmixer.chatMethods.ChatDeleteMethod;
+import com.mjr.mjrmixer.data.CoreData;
+import com.mjr.mjrmixer.data.ReconnectData;
 import com.mjr.mjrmixer.events.DisconnectEvent.DisconnectType;
 import com.mjr.mjrmixer.events.ReconnectEvent.ReconnectType;
 
@@ -48,79 +50,73 @@ public abstract class MixerBotBase {
 	private MixerConstellationConnectable constellationConnectable;
 	private MixerAPI mixer;
 
-	private List<String> moderators;
-	private List<String> viewers;
-	private List<IncomingMessageEvent> messageIDCache;
-	private List<String> liveEvents;
-
-	private String botName;
-
 	private boolean connected = false;
 	private boolean authenticated = false;
 
-	private int channelID;
-	private int userID;
-	private String channelName;
-
-	private long lastDisconnectTimeChat;
-	private long lastReconnectTimeChat;
-	private int lastReconnectCodeChat;
-
-	private long lastDisconnectTimeConstel;
-	private long lastReconnectTimeConstel;
-	private int lastReconnectCodeConstel;
-
-	private int numberOfFailedAuths = 0;
+	private ReconnectData reconnectData;
+	private CoreData coreData;
 
 	public MixerBotBase(String clientId, String authcode, String botName) {
-		this.botName = botName;
 		mixer = new MixerAPI(clientId, authcode);
-		moderators = new ArrayList<String>();
-		viewers = new ArrayList<String>();
-		messageIDCache = new ArrayList<IncomingMessageEvent>();
+		reconnectData = new ReconnectData();
+		coreData = new CoreData(botName);
 	}
 
 	private void authWithMixer() {
-		if (connectedChannel == null)
-			MixerEventHooks.triggerOnFailedAuthEvent(this, "ConnectedChannel was null when trying to Authenticate with Mixer, Mixer Framework will try to fix this!", numberOfFailedAuths);
-		if (user == null)
-			MixerEventHooks.triggerOnFailedAuthEvent(this, "User was null when trying to Authenticate with Mixer", numberOfFailedAuths);
-		if (chat.authkey == null)
-			MixerEventHooks.triggerOnFailedAuthEvent(this, "User Auth Key was null when trying to Authenticate with Mixer", numberOfFailedAuths);
-		else {
-			connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
-				@Override
-				public void onSuccess(AuthenticationReply reply) {
-					MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Authenticated to Mixer, Error:" + reply.error + ", Authed: " + reply.authenticated + ", ID: " + reply.id + ", Type: " + reply.type);
-					if (reply.error == null) {
-						authenticated = true;
-						numberOfFailedAuths = 0;
-					} else {
-						authenticated = false;
-						numberOfFailedAuths++;
-						MixerEventHooks.triggerOnFailedAuthEvent(null, "Failed to Authenticate with Mixer, due to Error: " + reply.error, numberOfFailedAuths);
+		try {
+			int amount = this.reconnectData.increaseNumberOfFailedAuths();
+			if (connectedChannel == null)
+				MixerEventHooks.triggerOnFailedAuthEvent(this, "ConnectedChannel was null when trying to Authenticate with Mixer, Mixer Framework will try to fix this!", amount);
+			if (user == null)
+				MixerEventHooks.triggerOnFailedAuthEvent(this, "User was null when trying to Authenticate with Mixer", amount);
+			if (chat == null)
+				MixerEventHooks.triggerOnFailedAuthEvent(this, "User was null when trying to Authenticate with Mixer", amount);
+			else if (chat.authkey == null)
+				MixerEventHooks.triggerOnFailedAuthEvent(this, "User Auth Key was null when trying to Authenticate with Mixer", amount);
+			else {
+				connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
+					@Override
+					public void onSuccess(AuthenticationReply reply) {
+						try {
+							MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Error:" + reply.error + ", Authed: " + reply.authenticated + ", ID: " + reply.id + ", Type: " + reply.type);
+							if (reply.error == null) {
+								MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Authenticated with Mixer, ID: " + reply.id);
+								authenticated = true;
+								reconnectData.setNumberOfFailedAuths(0);
+							} else {
+								authenticated = false;
+								MixerEventHooks.triggerOnFailedAuthEvent(null, "Failed to Authenticate with Mixer, due to Error: " + reply.error, amount);
+							}
+						} catch (Exception e) {
+							MixerEventHooks.triggerOnErrorEvent("Auth With Mixer Error", e);
+						}
 					}
-				}
 
-				@Override
-				public void onFailure(Throwable err) {
-					authenticated = false;
-					numberOfFailedAuths++;
-					MixerEventHooks.triggerOnErrorEvent("Failed to Authenticate with Mixer", err);
-					MixerEventHooks.triggerOnFailedAuthEvent(null, "Failed to Authenticate with Mixer, due to an exception", numberOfFailedAuths);
-				}
-			});
+					@Override
+					public void onFailure(Throwable err) {
+						try {
+							authenticated = false;
+							MixerEventHooks.triggerOnErrorEvent("", err);
+							MixerEventHooks.triggerOnFailedAuthEvent(null, "Failed to Authenticate with Mixer, due to an exception", amount);
+						} catch (Exception e) {
+							MixerEventHooks.triggerOnErrorEvent("Auth With Mixer Error", e);
+						}
+					}
+				});
+			}
+		} catch (Exception e) {
+			MixerEventHooks.triggerOnErrorEvent("Auth With Mixer Error", e);
 		}
 	}
 
 	private void requestEventsConstellation() {
-		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "ConstellationEvent Requesting events");
+		MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "ConstellationEvent Requesting events");
 		LiveRequestData test = new LiveRequestData();
-		test.events = (ArrayList<String>) this.liveEvents;
+		test.events = (ArrayList<String>) this.getCoreData().getLiveEvents();
 		LiveSubscribeMethod live = new LiveSubscribeMethod();
 		live.params = test;
 		constellationConnectable.send(live);
-		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "ConstellationEvent Requested events");
+		MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "ConstellationEvent Requested events");
 	}
 
 	/**
@@ -147,7 +143,7 @@ public abstract class MixerBotBase {
 	 * @throws IOException
 	 */
 	protected void joinMixerChannel(int userID, final ArrayList<String> eventsInput) throws InterruptedException, ExecutionException, IOException {
-		this.liveEvents = eventsInput;
+		getCoreData().setLiveEvents(eventsInput);
 		do {
 		} while (mixer == null);
 		MixerReconnectManager.initMixerReconnectThreadIfDoesntExist();
@@ -159,22 +155,22 @@ public abstract class MixerBotBase {
 			MixerEventHooks.triggerOnErrorEvent("No channel for the provided channel id", null);
 			return;
 		}
-		this.setUserID(userID);
-		this.setChannelID(connectedChannel.channel.id);
-		this.setChannelName(connectedChannel.username);
+		getCoreData().setUserID(userID);
+		getCoreData().setChannelID(connectedChannel.channel.id);
+		getCoreData().setChannelName(connectedChannel.username);
 		chat = mixer.use(ChatService.class).findOne(connectedChannel.channel.id).get();
 		connectable = chat.connectable(this.mixer, false);
 		connected = connectable.connect();
 		connectable.on(WelcomeEvent.class, new EventHandler<WelcomeEvent>() {
 			@Override
 			public void onEvent(WelcomeEvent event) {
-				MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Connected Server " + event.data.server);
-				MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Trying to authenticate to Mixer for channel " + getChannelID());
+				MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Connected Server " + event.data.server);
+				MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Trying to authenticate to Mixer for channel " + getCoreData().getChannelID());
 				authWithMixer();
 			}
 		});
-		if (!liveEvents.isEmpty()) {
-			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Starting Setting up of Constellation Events: HelloEvent, LiveEvent, ConstellationDisconnectEvent");
+		if (!getCoreData().getLiveEvents().isEmpty()) {
+			MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Starting Setting up of Constellation Events: HelloEvent, LiveEvent, ConstellationDisconnectEvent");
 			constellation = new MixerConstellation();
 			constellationConnectable = constellation.connectable(mixer, false);
 			constellationConnectable.connect();
@@ -193,22 +189,22 @@ public abstract class MixerBotBase {
 			constellationConnectable.on(ConstellationDisconnectEvent.class, new com.mixer.api.resource.constellation.events.EventHandler<ConstellationDisconnectEvent>() {
 				@Override
 				public void onEvent(ConstellationDisconnectEvent event) {
-					lastDisconnectTimeConstel = System.currentTimeMillis();
-					MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, getChannelName(), getChannelID(), event.data);
+					reconnectData.setLastDisconnectTimeConstel(System.currentTimeMillis());
+					MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, getCoreData().getChannelName(), getCoreData().getChannelID(), event.data);
 				}
 			});
-			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Finished Setting up of Constellation Events: HelloEvent, LiveEvent, ConstellationDisconnectEvent");
+			MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Finished Setting up of Constellation Events: HelloEvent, LiveEvent, ConstellationDisconnectEvent");
 		}
-		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "The channel id for the channel you're joining is " + connectedChannel.channel.id);
-		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Starting Setting up of Chat Events: IncomingMessageEvent, UserJoinEvent, UserLeaveEvent, ChatDisconnectEvent");
+		MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "The channel id for the channel you're joining is " + connectedChannel.channel.id);
+		MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Starting Setting up of Chat Events: IncomingMessageEvent, UserJoinEvent, UserLeaveEvent, ChatDisconnectEvent");
 		connectable.on(IncomingMessageEvent.class, new EventHandler<IncomingMessageEvent>() {
 			@Override
 			public void onEvent(IncomingMessageEvent event) {
-				if (messageIDCache.size() >= 100) {
-					messageIDCache.remove(0);
-					MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Removed oldest message from the message cache due to limit of 100 messages in the cache has been reached");
+				if (getCoreData().getMessageIDCaches().size() >= 100) {
+					getCoreData().getMessageIDCaches().remove(0);
+					MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Removed oldest message from the message cache due to limit of 100 messages in the cache has been reached");
 				}
-				messageIDCache.add(event);
+				getCoreData().addMessageIDCaches(event);
 				String msg = "";
 				List<String> emotes = new ArrayList<String>();
 				List<String> links = new ArrayList<String>();
@@ -225,35 +221,35 @@ public abstract class MixerBotBase {
 		connectable.on(UserJoinEvent.class, new EventHandler<UserJoinEvent>() {
 			@Override
 			public void onEvent(UserJoinEvent event) {
-				if (!viewers.contains(event.data.username.toLowerCase()))
-					viewers.add(event.data.username.toLowerCase());
+				if (!getCoreData().getViewers().contains(event.data.username.toLowerCase()))
+					getCoreData().addViewer(event.data.username.toLowerCase());
 				MixerEventHooks.triggerOnJoinEvent(connectedChannel.username, connectedChannel.channel.id, event.data.username, Integer.parseInt(event.data.id));
 			}
 		});
 		connectable.on(UserLeaveEvent.class, new EventHandler<UserLeaveEvent>() {
 			@Override
 			public void onEvent(UserLeaveEvent event) {
-				if (viewers.contains(event.data.username.toLowerCase()))
-					viewers.remove(event.data.username.toLowerCase());
+				if (getCoreData().getViewers().contains(event.data.username.toLowerCase()))
+					getCoreData().removeViewer(event.data.username.toLowerCase());
 				MixerEventHooks.triggerOnPartEvent(connectedChannel.username, connectedChannel.channel.id, event.data.username, Integer.parseInt(event.data.id));
 			}
 		});
 		connectable.on(ChatDisconnectEvent.class, new EventHandler<ChatDisconnectEvent>() {
 			@Override
 			public void onEvent(ChatDisconnectEvent event) {
-				lastDisconnectTimeChat = System.currentTimeMillis();
-				MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, getChannelName(), getChannelID(), event.data);
+				reconnectData.setLastDisconnectTimeChat(System.currentTimeMillis());
+				MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, getCoreData().getChannelName(), getCoreData().getChannelID(), event.data);
 			}
 		});
 		connectable.on(UserUpdateEvent.class, new EventHandler<UserUpdateEvent>() {
 			@Override
 			public void onEvent(UserUpdateEvent event) {
-				MixerEventHooks.triggerOnUserUpdateEvent(getChannelName(), getChannelID(), event.data.user, event.data.roles);
+				MixerEventHooks.triggerOnUserUpdateEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), event.data.user, event.data.roles);
 			}
 		});
-		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Finished Setting up of Chat Events: IncomingMessageEvent, UserJoinEvent, UserLeaveEvent, ChatDisconnectEvent");
+		MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Finished Setting up of Chat Events: IncomingMessageEvent, UserJoinEvent, UserLeaveEvent, ChatDisconnectEvent");
 
-		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Loading Moderators & Viewers");
+		MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Loading Moderators & Viewers");
 		try {
 			this.loadModerators();
 			this.loadViewers();
@@ -261,11 +257,11 @@ public abstract class MixerBotBase {
 			MixerEventHooks.triggerOnErrorEvent("Error happened when trying to load moderators/viewers", e);
 		}
 		if (connected && authenticated)
-			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Connected & Authenticated to Mixer");
+			MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Connected & Authenticated to Mixer");
 		else if (connected && !authenticated)
-			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Connected to Mixer but not Authenticated");
+			MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Connected to Mixer but not Authenticated");
 		else if (authenticated && !connected)
-			MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Authenticated to Mixer but not connected");
+			MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Authenticated to Mixer but not connected");
 	}
 
 	/**
@@ -280,12 +276,12 @@ public abstract class MixerBotBase {
 	 * Used to disconnect the bot from a channel's chat
 	 */
 	public final void disconnectChat() {
-		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, this.channelName, this.channelID, new ChatDisconnectData(1000, "Requested Disconnect By Bot", false));
+		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, getCoreData().getChannelName(), getCoreData().getChannelID(), new ChatDisconnectData(1000, "Requested Disconnect By Bot", false));
 		connectable.disconnect();
-		viewers.clear();
-		moderators.clear();
-		messageIDCache.clear();
-		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Disconnected from Mixer Chat!");
+		getCoreData().getViewers().clear();
+		getCoreData().getModerators().clear();
+		getCoreData().getMessageIDCaches().clear();
+		MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Disconnected from Mixer Chat!");
 		this.connected = false;
 		this.authenticated = false;
 	}
@@ -296,7 +292,7 @@ public abstract class MixerBotBase {
 	 * @param code
 	 */
 	public final void addForReconnectChat(int code) {
-		this.lastReconnectCodeChat = code;
+		this.reconnectData.setLastReconnectCodeChat(code);
 		MixerReconnectManager.getMixerReconnectThread().addMixerBotChatBase(this);
 	}
 
@@ -304,13 +300,13 @@ public abstract class MixerBotBase {
 	 * Used to reconnect the bot from a channel's chat
 	 */
 	public final void reconnectChat() {
-		this.lastReconnectTimeChat = System.currentTimeMillis();
-		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CHAT, this.channelName, this.channelID);
+		this.reconnectData.setLastReconnectTimeChat(System.currentTimeMillis());
+		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CHAT, getCoreData().getChannelName(), getCoreData().getChannelID());
 		try {
 			if (this.connectable.reconnectBlocking())
-				MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Reconnected to Mixer Chat!");
+				MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Reconnected to Mixer Chat!");
 			else
-				MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Failed to be reconnected to Mixer Chat!");
+				MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Failed to be reconnected to Mixer Chat!");
 		} catch (InterruptedException e) {
 			MixerEventHooks.triggerOnErrorEvent("InterruptedException when Reconnecting Websocket", e);
 		}
@@ -320,7 +316,7 @@ public abstract class MixerBotBase {
 	 * Used to disconnect the bot from a channel's constellation
 	 */
 	public final void disconnectConstellation() {
-		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, this.channelName, this.channelID, new ConstellationDisconnectData(1000, "Requested Disconnect By Bot", false));
+		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, getCoreData().getChannelName(), getCoreData().getChannelID(), new ConstellationDisconnectData(1000, "Requested Disconnect By Bot", false));
 		this.constellationConnectable.disconnect();
 	}
 
@@ -330,7 +326,7 @@ public abstract class MixerBotBase {
 	 * @param code
 	 */
 	public final void addForReconnectConstellation(int code) {
-		this.lastReconnectCodeConstel = code;
+		this.reconnectData.setLastReconnectCodeConstel(code);
 		MixerReconnectManager.getMixerReconnectThread().addMixerBotChatConstellation(this);
 	}
 
@@ -338,13 +334,13 @@ public abstract class MixerBotBase {
 	 * Used to reconnect the bot from a channel's constellation
 	 */
 	public final void reconnectConstellation() {
-		this.lastReconnectTimeConstel = System.currentTimeMillis();
-		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CONSTELLATION, this.channelName, this.channelID);
+		this.reconnectData.setLastReconnectTimeConstel(System.currentTimeMillis());
+		MixerEventHooks.triggerOnReconnectEvent(ReconnectType.CONSTELLATION, getCoreData().getChannelName(), getCoreData().getChannelID());
 		try {
 			if (this.constellationConnectable.reconnectBlocking())
-				MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Reconnected to Mixer Constellation!");
+				MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Reconnected to Mixer Constellation!");
 			else
-				MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Failed to be reconnected to Mixer Constellation!");
+				MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Failed to be reconnected to Mixer Constellation!");
 		} catch (InterruptedException e) {
 			MixerEventHooks.triggerOnErrorEvent("InterruptedException when Reconnecting Websocket", e);
 		}
@@ -367,7 +363,7 @@ public abstract class MixerBotBase {
 	 */
 	public String deleteUserMessages(String user) {
 		int messagesDeleted = 0;
-		for (IncomingMessageEvent message : messageIDCache) {
+		for (IncomingMessageEvent message : getCoreData().getMessageIDCaches()) {
 			if (user.equalsIgnoreCase(message.data.userName)) {
 				connectable.send(ChatDeleteMethod.of(message.data));
 				messagesDeleted++;
@@ -387,12 +383,12 @@ public abstract class MixerBotBase {
 	 */
 	public String deleteLastMessageForUser(String user) {
 		int lastMessage = 0;
-		for (int i = 0; i < messageIDCache.size(); i++) {
-			if (user.equalsIgnoreCase(messageIDCache.get(i).data.userName)) {
+		for (int i = 0; i < getCoreData().getMessageIDCaches().size(); i++) {
+			if (user.equalsIgnoreCase(getCoreData().getMessageIDCaches().get(i).data.userName)) {
 				lastMessage = i;
 			}
 		}
-		connectable.send(ChatDeleteMethod.of(messageIDCache.get(lastMessage).data));
+		connectable.send(ChatDeleteMethod.of(getCoreData().getMessageIDCaches().get(lastMessage).data));
 		return "Deleted last message for " + user + "!";
 	}
 
@@ -402,7 +398,7 @@ public abstract class MixerBotBase {
 	 * @return
 	 */
 	public String deleteLastMessage() {
-		connectable.send(ChatDeleteMethod.of(messageIDCache.get(messageIDCache.size() - 1).data));
+		connectable.send(ChatDeleteMethod.of(getCoreData().getMessageIDCaches().get(getCoreData().getMessageIDCaches().size() - 1).data));
 		return "Deleted last message!";
 	}
 
@@ -424,7 +420,7 @@ public abstract class MixerBotBase {
 			MixerEventHooks.triggerOnErrorEvent("Error happened when trying to ban User: " + user, e);
 			return;
 		}
-		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Banned " + user);
+		MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Banned " + user);
 	}
 
 	/**
@@ -443,7 +439,7 @@ public abstract class MixerBotBase {
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
 			MixerEventHooks.triggerOnErrorEvent("Error happened when trying to unban User: " + user, e);
 		}
-		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "unban " + user);
+		MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "unban " + user);
 	}
 
 	/**
@@ -452,7 +448,7 @@ public abstract class MixerBotBase {
 	 * @throws IOException
 	 */
 	public void reloadModerators() throws IOException {
-		this.moderators.clear();
+		getCoreData().getModerators().clear();
 		this.loadModerators();
 	}
 
@@ -478,13 +474,13 @@ public abstract class MixerBotBase {
 				username = username.substring(0, username.indexOf(",") - 1);
 				result = result.substring(result.indexOf("username") + 8);
 				if (permission.contains("Mod")) {
-					if (!moderators.contains(username.toLowerCase()))
-						moderators.add(username.toLowerCase());
+					if (!getCoreData().getModerators().contains(username.toLowerCase()))
+						getCoreData().addModerator(username.toLowerCase());
 				}
 			} else
 				done = true;
 		}
-		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Found " + moderators.size() + " moderators!");
+		MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Found " + getCoreData().getModerators().size() + " moderators!");
 	}
 
 	private void loadViewers() throws IOException {
@@ -505,19 +501,19 @@ public abstract class MixerBotBase {
 				username = result.substring(result.indexOf("userName") + 11);
 				username = username.substring(0, username.indexOf("\""));
 				result = result.substring(result.indexOf(username));
-				if (!viewers.contains(username.toLowerCase()))
-					viewers.add(username.toLowerCase());
+				if (!getCoreData().getViewers().contains(username.toLowerCase()))
+					getCoreData().addViewer(username.toLowerCase());
 			} else
 				done = true;
 		}
-		MixerEventHooks.triggerOnInfoEvent(getChannelName(), getChannelID(), "Found " + viewers.size() + " viewers!");
+		MixerEventHooks.triggerOnInfoEvent(getCoreData().getChannelName(), getCoreData().getChannelID(), "Found " + getCoreData().getViewers().size() + " viewers!");
 	}
 
 	public boolean isUserMod(String user) {
 		if (connectedChannel == null) {
 			return false;
 		}
-		return (moderators != null) && moderators.contains(user.toLowerCase());
+		return (getCoreData().getModerators() != null) && getCoreData().getModerators().contains(user.toLowerCase());
 	}
 
 	public boolean isChatConnectionClosed() {
@@ -534,38 +530,6 @@ public abstract class MixerBotBase {
 
 	public boolean isAuthenticated() {
 		return authenticated;
-	}
-
-	public String getBotName() {
-		return this.botName;
-	}
-
-	public List<String> getModerators() {
-		return moderators;
-	}
-
-	public List<String> getViewers() {
-		return viewers;
-	}
-
-	protected void addViewer(String viewer) {
-		if (!viewers.contains(viewer.toLowerCase()) && !viewer.equals(""))
-			this.viewers.add(viewer.toLowerCase());
-	}
-
-	protected void removeViewer(String viewer) {
-		if (viewers.contains(viewer.toLowerCase()))
-			viewers.remove(viewer.toLowerCase());
-	}
-
-	protected void addModerator(String moderator) {
-		if (!moderators.contains(moderator.toLowerCase()) && !moderator.equals(""))
-			this.moderators.add(moderator.toLowerCase());
-	}
-
-	protected void removeModerator(String moderator) {
-		if (moderators.contains(moderator.toLowerCase()))
-			moderators.remove(moderator.toLowerCase());
 	}
 
 	public MixerUser getConnectedChannel() {
@@ -622,52 +586,12 @@ public abstract class MixerBotBase {
 		}
 	}
 
-	public int getChannelID() {
-		return this.channelID;
+	public ReconnectData getReconnectData() {
+		return reconnectData;
 	}
 
-	public void setChannelID(int channelID) {
-		this.channelID = channelID;
-	}
-
-	public int getUserID() {
-		return userID;
-	}
-
-	public void setUserID(int userID) {
-		this.userID = userID;
-	}
-
-	public String getChannelName() {
-		return this.channelName;
-	}
-
-	public void setChannelName(String channelName) {
-		this.channelName = channelName;
-	}
-
-	public long getLastDisconnectTimeChat() {
-		return lastDisconnectTimeChat;
-	}
-
-	public long getLastReconnectTimeChat() {
-		return lastReconnectTimeChat;
-	}
-
-	public int getLastReconnectCodeChat() {
-		return lastReconnectCodeChat;
-	}
-
-	public long getLastDisconnectTimeConstel() {
-		return lastDisconnectTimeConstel;
-	}
-
-	public long getLastReconnectTimeConstel() {
-		return lastReconnectTimeConstel;
-	}
-
-	public int getLastReconnectCodeConstel() {
-		return lastReconnectCodeConstel;
+	public CoreData getCoreData() {
+		return coreData;
 	}
 
 	public abstract void onMessage(String sender, int senderID, List<Role> userRoles, String message, List<String> emotes, List<String> links);

@@ -26,8 +26,8 @@ public class MixerReconnectThread extends Thread {
 					while (iterator.hasNext()) {
 						MixerBotBase bot = iterator.next();
 						do {
-							if (bot.getLastDisconnectTimeChat() + 5000 <= System.currentTimeMillis() && bot.getLastReconnectCodeChat() != 1008
-									|| (bot.getLastReconnectCodeChat() == 1008 && bot.getLastReconnectTimeChat() + 30000 <= System.currentTimeMillis())) {
+							if (bot.getReconnectData().getLastDisconnectTimeChat() + 5000 <= System.currentTimeMillis() && bot.getReconnectData().getLastReconnectCodeChat() != 1008
+									|| (bot.getReconnectData().getLastReconnectCodeChat() == 1008 && bot.getReconnectData().getLastReconnectTimeChat() + 30000 <= System.currentTimeMillis())) {
 								attempt = attempt + 1;
 								if (bot.isChatConnectionClosed()) {
 									Callable<Boolean> callable = () -> {
@@ -39,7 +39,7 @@ public class MixerReconnectThread extends Thread {
 										future.get(30, TimeUnit.SECONDS);
 									} catch (TimeoutException e) {
 										MixerEventHooks.triggerOnErrorEvent("[Mixer Framework Reconnect] Timeout", e);
-										MixerEventHooks.triggerOnInfoEvent(bot.getChannelName(), bot.getChannelID(), "[Mixer Framework Reconnect] Chat reconnect has timed out for taking to long will skip and retry! Attempt " + attempt);
+										MixerEventHooks.triggerOnInfoEvent(bot.getCoreData().getChannelName(), bot.getCoreData().getChannelID(), "[Mixer Framework Reconnect] Chat reconnect has timed out for taking to long will skip and retry! Attempt " + attempt);
 										if (!bot.isChatConnectionClosed())
 											bot.disconnectChat();
 									}
@@ -59,8 +59,8 @@ public class MixerReconnectThread extends Thread {
 					while (iterator.hasNext()) {
 						MixerBotBase bot = iterator.next();
 						do {
-							if (bot.getLastDisconnectTimeConstel() + 5000 <= System.currentTimeMillis() && bot.getLastReconnectCodeConstel() != 1008
-									|| (bot.getLastReconnectCodeConstel() == 1008 && bot.getLastReconnectTimeConstel() + 30000 <= System.currentTimeMillis())) {
+							if (bot.getReconnectData().getLastDisconnectTimeConstel() + 5000 <= System.currentTimeMillis() && bot.getReconnectData().getLastReconnectCodeConstel() != 1008
+									|| (bot.getReconnectData().getLastReconnectCodeConstel() == 1008 && bot.getReconnectData().getLastReconnectTimeConstel() + 30000 <= System.currentTimeMillis())) {
 								attempt = attempt + 1;
 								if (bot.isConstellationConnectionClosed()) {
 									Callable<Boolean> callable = () -> {
@@ -72,7 +72,7 @@ public class MixerReconnectThread extends Thread {
 										future.get(30, TimeUnit.SECONDS);
 									} catch (TimeoutException e) {
 										MixerEventHooks.triggerOnErrorEvent("[Mixer Framework Reconnect] Timeout", e);
-										MixerEventHooks.triggerOnInfoEvent(bot.getChannelName(), bot.getChannelID(), "[Mixer Framework Reconnect] Constellation reconnect has timed out for taking to long will skip and retry! Attempt " + attempt);
+										MixerEventHooks.triggerOnInfoEvent(bot.getCoreData().getChannelName(), bot.getCoreData().getChannelID(), "[Mixer Framework Reconnect] Constellation reconnect has timed out for taking to long will skip and retry! Attempt " + attempt);
 										if (!bot.isConstellationConnectionClosed())
 											bot.disconnectConstellation();
 									}
