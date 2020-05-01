@@ -66,13 +66,13 @@ public abstract class MixerBotBase {
 		try {
 			int amount = this.reconnectData.increaseNumberOfFailedAuths();
 			if (connectedChannel == null)
-				MixerEventHooks.triggerOnFailedAuthEvent(this, "ConnectedChannel was null when trying to Authenticate with Mixer, Mixer Framework will try to fix this!", amount);
+				MixerEventHooks.triggerOnFailedAuthEvent(this, "ConnectedChannel was null when trying to Authenticate with Mixer, Mixer Framework will try to fix this!", amount, getCoreData().getChannelName(), getCoreData().getChannelID());
 			if (user == null)
-				MixerEventHooks.triggerOnFailedAuthEvent(this, "User was null when trying to Authenticate with Mixer", amount);
+				MixerEventHooks.triggerOnFailedAuthEvent(this, "User was null when trying to Authenticate with Mixer", amount, getCoreData().getChannelName(), getCoreData().getChannelID());
 			if (chat == null)
-				MixerEventHooks.triggerOnFailedAuthEvent(this, "User was null when trying to Authenticate with Mixer", amount);
+				MixerEventHooks.triggerOnFailedAuthEvent(this, "User was null when trying to Authenticate with Mixer", amount, getCoreData().getChannelName(), getCoreData().getChannelID());
 			else if (chat.authkey == null)
-				MixerEventHooks.triggerOnFailedAuthEvent(this, "User Auth Key was null when trying to Authenticate with Mixer", amount);
+				MixerEventHooks.triggerOnFailedAuthEvent(this, "User Auth Key was null when trying to Authenticate with Mixer", amount, getCoreData().getChannelName(), getCoreData().getChannelID());
 			else {
 				connectable.send(AuthenticateMessage.from(connectedChannel.channel, user, chat.authkey), new ReplyHandler<AuthenticationReply>() {
 					@Override
@@ -85,7 +85,7 @@ public abstract class MixerBotBase {
 								reconnectData.setNumberOfFailedAuths(0);
 							} else {
 								authenticated = false;
-								MixerEventHooks.triggerOnFailedAuthEvent(null, "Failed to Authenticate with Mixer, due to Error: " + reply.error, amount);
+								MixerEventHooks.triggerOnFailedAuthEvent(null, "Failed to Authenticate with Mixer, due to Error: " + reply.error, amount, getCoreData().getChannelName(), getCoreData().getChannelID());
 							}
 						} catch (Exception e) {
 							MixerEventHooks.triggerOnErrorEvent("Auth With Mixer Error", e);
@@ -97,7 +97,7 @@ public abstract class MixerBotBase {
 						try {
 							authenticated = false;
 							MixerEventHooks.triggerOnErrorEvent("", err);
-							MixerEventHooks.triggerOnFailedAuthEvent(null, "Failed to Authenticate with Mixer, due to an exception", amount);
+							MixerEventHooks.triggerOnFailedAuthEvent(null, "Failed to Authenticate with Mixer, due to an exception", amount, getCoreData().getChannelName(), getCoreData().getChannelID());
 						} catch (Exception e) {
 							MixerEventHooks.triggerOnErrorEvent("Auth With Mixer Error", e);
 						}

@@ -67,10 +67,10 @@ public class MixerEventHooks {
 		}
 	}
 
-	public static void triggerOnFailedAuthEvent(MixerBotBase bot, String errorMessage, int numberOfFailedAuths) {
+	public static void triggerOnFailedAuthEvent(MixerBotBase bot, String errorMessage, int numberOfFailedAuths, String channelName, int channelID) {
 		for (Event event : MixerManager.getEventListeners()) {
 			if (EventType.FAILEDAUTH.getName().equalsIgnoreCase(event.type.getName()))
-				((FailedAuthEvent) event).onEvent(new FailedAuthEvent(errorMessage, numberOfFailedAuths, bot.getCoreData().getChannelName(), bot.getCoreData().getChannelID()));
+				((FailedAuthEvent) event).onEvent(new FailedAuthEvent(errorMessage, numberOfFailedAuths, channelName, channelID));
 		}
 		if(bot != null && bot.getConnectedChannel() == null)
 			bot.updateConnectedChannel();
