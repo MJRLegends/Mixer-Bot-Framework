@@ -41,6 +41,7 @@ public class MixerReconnectThread extends Thread {
 										MixerEventHooks.triggerOnErrorEvent("[Mixer Framework Reconnect] Timeout", e);
 										MixerEventHooks.triggerOnInfoEvent(bot.getCoreData().getChannelName(), bot.getCoreData().getChannelID(), "[Mixer Framework Reconnect] Chat reconnect has timed out for taking to long will skip and retry! Attempt " + attempt);
 										if (!bot.isChatConnectionClosed())
+											MixerEventHooks.triggerOnFailedReconnectEvent(attempt, bot.getCoreData().getChannelName(), bot.getCoreData().getChannelID());
 											bot.disconnectChat();
 									}
 								}
@@ -74,6 +75,7 @@ public class MixerReconnectThread extends Thread {
 										MixerEventHooks.triggerOnErrorEvent("[Mixer Framework Reconnect] Timeout", e);
 										MixerEventHooks.triggerOnInfoEvent(bot.getCoreData().getChannelName(), bot.getCoreData().getChannelID(), "[Mixer Framework Reconnect] Constellation reconnect has timed out for taking to long will skip and retry! Attempt " + attempt);
 										if (!bot.isConstellationConnectionClosed())
+											MixerEventHooks.triggerOnFailedReconnectEvent(attempt, bot.getCoreData().getChannelName(), bot.getCoreData().getChannelID());
 											bot.disconnectConstellation();
 									}
 								}
