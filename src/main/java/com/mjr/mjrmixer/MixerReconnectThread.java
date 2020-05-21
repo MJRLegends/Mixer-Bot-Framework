@@ -40,12 +40,14 @@ public class MixerReconnectThread extends Thread {
 									} catch (TimeoutException e) {
 										MixerEventHooks.triggerOnErrorEvent("[Mixer Framework Reconnect] Timeout", e);
 										MixerEventHooks.triggerOnInfoEvent(bot.getCoreData().getChannelName(), bot.getCoreData().getChannelID(), "[Mixer Framework Reconnect] Chat reconnect has timed out for taking to long will skip and retry! Attempt " + attempt);
-										if (!bot.isChatConnectionClosed())
+										if (!bot.isChatConnectionClosed()) {
 											MixerEventHooks.triggerOnFailedReconnectEvent(attempt, bot.getCoreData().getChannelName(), bot.getCoreData().getChannelID());
 											bot.disconnectChat();
+											Thread.sleep(getBackOffAmount(attempt));
+										}
 									}
 								}
-								Thread.sleep((mixerBotSleepTime * 1000) * attempt);
+								//Thread.sleep((mixerBotSleepTime * 1000));
 								if (!bot.isChatConnectionClosed())
 									mixerBotsChat.remove(bot);
 							} else
@@ -74,12 +76,14 @@ public class MixerReconnectThread extends Thread {
 									} catch (TimeoutException e) {
 										MixerEventHooks.triggerOnErrorEvent("[Mixer Framework Reconnect] Timeout", e);
 										MixerEventHooks.triggerOnInfoEvent(bot.getCoreData().getChannelName(), bot.getCoreData().getChannelID(), "[Mixer Framework Reconnect] Constellation reconnect has timed out for taking to long will skip and retry! Attempt " + attempt);
-										if (!bot.isConstellationConnectionClosed())
+										if (!bot.isConstellationConnectionClosed()) {
 											MixerEventHooks.triggerOnFailedReconnectEvent(attempt, bot.getCoreData().getChannelName(), bot.getCoreData().getChannelID());
 											bot.disconnectConstellation();
+											Thread.sleep(getBackOffAmount(attempt));
+										}
 									}
 								}
-								Thread.sleep((mixerBotSleepTime * 1000) * attempt);
+								//Thread.sleep((mixerBotSleepTime * 1000));
 								if (!bot.isConstellationConnectionClosed())
 									mixerBotsConstell.remove(bot);
 							} else
@@ -100,6 +104,32 @@ public class MixerReconnectThread extends Thread {
 			}
 		}
 
+	}
+
+	public int getBackOffAmount(int attempt) {
+		switch (attempt) {
+		default:
+		case 1:
+			return 2000;
+		case 2:
+			return 5000;
+		case 3:
+			return 10000;
+		case 4:
+			return 20000;
+		case 5:
+			return 30000;
+		case 6:
+			return 40000;
+		case 7:
+			return 50000;
+		case 8:
+			return 60000;
+		case 9:
+			return 80000;
+		case 10:
+			return 100000;
+		}
 	}
 
 	public List<MixerBotBase> getMixerBotChatBases() {
