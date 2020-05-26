@@ -105,6 +105,6 @@ public class CoreData {
 	}
 
 	public void setChannelName(String channelName) {
-		this.channelName = channelName;
+		this.channelName = channelName.toLowerCase();
 	}
 }
