@@ -277,7 +277,8 @@ public abstract class MixerBotBase {
 	 */
 	public final void disconnectChat() {
 		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CHAT, getCoreData().getChannelName(), getCoreData().getChannelID(), new ChatDisconnectData(1000, "Requested Disconnect By Bot", false));
-		connectable.disconnect();
+		if (connectable != null && !connectable.isClosed())
+			connectable.disconnect();
 		getCoreData().getViewers().clear();
 		getCoreData().getModerators().clear();
 		getCoreData().getMessageIDCaches().clear();
@@ -317,7 +318,8 @@ public abstract class MixerBotBase {
 	 */
 	public final void disconnectConstellation() {
 		MixerEventHooks.triggerOnDisconnectEvent(DisconnectType.CONSTELLATION, getCoreData().getChannelName(), getCoreData().getChannelID(), new ConstellationDisconnectData(1000, "Requested Disconnect By Bot", false));
-		this.constellationConnectable.disconnect();
+		if (constellationConnectable != null && !constellationConnectable.isClosed())
+			this.constellationConnectable.disconnect();
 	}
 
 	/**
