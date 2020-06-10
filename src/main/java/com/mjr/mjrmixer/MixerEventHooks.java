@@ -78,7 +78,7 @@ public class MixerEventHooks {
 
 	public static void triggerOnFailedReconnectEvent(int numberOfFailedAuths, String channelName, int channelID) {
 		for (Event event : MixerManager.getEventListeners()) {
-			if (EventType.FAILEDAUTH.getName().equalsIgnoreCase(event.type.getName()))
+			if (EventType.FAILEDRECONNECT.getName().equalsIgnoreCase(event.type.getName()))
 				((FailedReconnectEvent) event).onEvent(new FailedReconnectEvent(numberOfFailedAuths, channelName, channelID));
 		}
 	}
