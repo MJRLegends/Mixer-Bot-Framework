@@ -143,6 +143,23 @@ public abstract class MixerBotBase {
 	 * @throws IOException
 	 */
 	protected void joinMixerChannel(int userID, final ArrayList<String> eventsInput) throws InterruptedException, ExecutionException, IOException {
+		joinMixerChannel(-1, userID, eventsInput);
+	}
+
+	/**
+	 * Used to connect the bot to Mixer & join a channel
+	 *
+	 * @param channelID
+	 * @param userID      (DONT USE channelID)
+	 * @param eventsInput
+	 * @return channelName
+	 * @throws InterruptedException
+	 * @throws ExecutionException
+	 * @throws IOException
+	 */
+	protected void joinMixerChannel(int channelID, int userID, final ArrayList<String> eventsInput) throws InterruptedException, ExecutionException, IOException {
+		if(channelID != -1 && channelID != 0)
+			getCoreData().setChannelID(channelID);
 		getCoreData().setLiveEvents(eventsInput);
 		do {
 		} while (mixer == null);
