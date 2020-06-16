@@ -8,7 +8,7 @@ public class MixerReconnectManager {
 	}
 
 	public static void initMixerReconnectThreadIfDoesntExist() {
-		if (mixerReconnectThread == null) {
+		if (mixerReconnectThread == null || mixerReconnectThread.getState() == Thread.State.TERMINATED) {
 			mixerReconnectThread = new MixerReconnectThread(10);
 			mixerReconnectThread.start();
 		}

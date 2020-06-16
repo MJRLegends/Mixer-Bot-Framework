@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.*;
 
-public class MixerReconnectThread extends Thread {
+public class MixerReconnectThread extends BasicKillableThread {
 	private CopyOnWriteArrayList<MixerBotBase> mixerBotsChat = new CopyOnWriteArrayList<MixerBotBase>();
 	private CopyOnWriteArrayList<MixerBotBase> mixerBotsConstell = new CopyOnWriteArrayList<MixerBotBase>();
 
@@ -17,7 +17,7 @@ public class MixerReconnectThread extends Thread {
 
 	@Override
 	public void run() {
-		while (true) {
+		while (!this.isKillThread()) {
 			try {
 				ExecutorService threadPool = Executors.newCachedThreadPool();
 				if (mixerBotsChat.size() != 0) {
